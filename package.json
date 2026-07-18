@@ -19,13 +19,13 @@
 
   "lint-staged": {
     "frontend/**/*.{js,jsx,ts,tsx}": [
-      "npm --workspace frontend run lint"
+      "npm --workspace=@event-booking/frontend run lint"
     ],
     "backend/**/*.{js,ts}": [
       "npm --workspace backend run lint"
     ]
   },
-  
+
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8"
