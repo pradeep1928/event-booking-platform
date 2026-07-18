@@ -23,8 +23,8 @@ app.use(express.json());
 app.use('/api/v1', routes);
 
 app.use(requestIdMiddleware);
-
 app.use(loggerMiddleware);
+
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
