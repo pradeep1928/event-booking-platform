@@ -1,0 +1,33 @@
+{
+  "name": "event-booking-platform",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "lint:frontend": "npm run lint --workspace=frontend",
+    "lint:backend": "npm run lint --workspace=backend",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,css,scss,md}\"",
+    "prepare": "husky"
+  },
+
+  "lint-staged": {
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "npm --workspace frontend run lint"
+    ],
+    "backend/**/*.{js,ts}": [
+      "npm --workspace backend run lint"
+    ]
+  },
+  
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8"
+  }
+}
