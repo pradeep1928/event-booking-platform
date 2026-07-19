@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { AuthRepository } from './auth.repository.js';
 import type { RegisterDto } from './auth.validation.js';
+import {ConflictError} from '../../common/errors/conflict.error.js';
 
 export class AuthService {
   constructor(private readonly repository = new AuthRepository()) {}
@@ -9,7 +10,7 @@ export class AuthService {
     const existingUser = await this.repository.findUserByEmail(data.email);
 
     if (existingUser) {
-      throw new Error('Email already exists');
+      throw new ConflictError('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(

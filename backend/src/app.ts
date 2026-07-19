@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import { errorMiddleware } from './common/middlware/error.middleware.js';
-import { notFoundMiddleware } from './common/middlware/not-found.middleware.js';
+
+// Import from files
+import { errorHandler } from './common/middlware/error.middleware.js';
+import { notFoundHandler } from './common/middlware/not-found.middleware.js';
 import { requestIdMiddleware } from './common/middlware/request-id.middleware.js';
 import { loggerMiddleware } from './common/middlware/logger.middleware.js';
 
@@ -19,14 +21,17 @@ app.use(compression());
 
 app.use(express.json());
 
-
+// API routes
 app.use('/api/v1', routes);
 
 app.use(requestIdMiddleware);
 app.use(loggerMiddleware);
 
-app.use(notFoundMiddleware);
-app.use(errorMiddleware);
+// 404 handler (must be after all routes)
+app.use(notFoundHandler);
+
+// Error handler (must be after all routes and middlewares)
+app.use(errorHandler);
 
 
 export default app;
