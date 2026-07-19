@@ -11,3 +11,81 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String   @unique
+  password    String
+  role        Role     @default(USER)
+  isVerified  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings      Booking[]
+  events        Event[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  venue          String
+  capacity       Int
+  availableSeats Int
+  eventDate      DateTime
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdById    String
+  createdBy      User @relation(fields: [createdById], references: [id])
+
+  bookings       Booking[]
+
+  @@index([eventDate])
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  ticketCount Int
+  status      BookingStatus @default(CONFIRMED)
+
+  userId      String
+  eventId     String
+
+  user         User  @relation(fields: [userId], references: [id])
+  event        Event @relation(fields: [eventId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, eventId])
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+
+  userId     String
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+}
