@@ -1,13 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose';
+import crypto from 'node:crypto';
 
 import { authConfig } from '../../config/auth.config.js';
-import type { JwtPayload } from './jwt.types.js';
+import type { AccessTokenPayload, RefreshTokenPayload  } from './jwt.types.js';
 
 const encoder = new TextEncoder();
 
 export class JwtService {
   async generateAccessToken(
-    payload: JwtPayload,
+    payload: AccessTokenPayload ,
   ): Promise<string> {
     return await new SignJWT(payload)
       .setProtectedHeader({
@@ -26,7 +27,7 @@ export class JwtService {
   }
 
   async generateRefreshToken(
-    payload: JwtPayload,
+    payload: RefreshTokenPayload ,
   ): Promise<string> {
     return await new SignJWT(payload)
       .setProtectedHeader({
@@ -46,7 +47,7 @@ export class JwtService {
 
   async verifyAccessToken(
     token: string,
-  ): Promise<JwtPayload> {
+  ): Promise<AccessTokenPayload > {
     const { payload } = await jwtVerify(
       token,
       encoder.encode(
@@ -54,12 +55,12 @@ export class JwtService {
       ),
     );
 
-    return payload as JwtPayload;
+    return payload as AccessTokenPayload ;
   }
 
   async verifyRefreshToken(
     token: string,
-  ): Promise<JwtPayload> {
+  ): Promise<AccessTokenPayload > {
     const { payload } = await jwtVerify(
       token,
       encoder.encode(
@@ -67,8 +68,17 @@ export class JwtService {
       ),
     );
 
-    return payload as JwtPayload;
+    return payload as AccessTokenPayload ;
   }
+
+  getRefreshTokenExpiryDate(): Date {
+  const expiresAt = new Date();
+  expiresAt.setDate(
+    expiresAt.getDate() + 7,
+  );
+
+  return expiresAt;
+}
 }
 
 export const jwtService = new JwtService();

@@ -10,9 +10,8 @@ const controller = new AuthController();
 
 // with asyncHandler
 router.post('/register', asyncHandler(controller.register));
-router.post(
-    '/login',
-    asyncHandler(controller.login),
+
+router.post('/login', asyncHandler(controller.login),
 );
 
 export default router;

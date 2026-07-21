@@ -13,4 +13,15 @@ export class AuthRepository {
       data,
     });
   }
+
+  async saveRefreshToken(data: {
+  jti: string;
+  tokenHash: string;
+  expiresAt: Date;
+  userId: string;
+}) {
+  return prisma.refreshToken.create({
+    data,
+  });
+}
 }
