@@ -70,5 +70,15 @@ login = async (
     });
 };
 
+me = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  res.json({
+    success: true,
+    data: req.user
+  });
+};
+
 
 }
