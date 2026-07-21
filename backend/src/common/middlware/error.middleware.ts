@@ -3,6 +3,7 @@ import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { AppError } from '../errors/app-error.js';
 import { logger } from '../logger/logger.js';
+import { AppException } from '../exceptions/AppException.js';
 
 export const errorHandler: ErrorRequestHandler = (
   err,
@@ -28,6 +29,13 @@ export const errorHandler: ErrorRequestHandler = (
     });
     return;
   }
+
+  if (err instanceof AppException) {
+    return res.status(err.statusCode).json({
+        success: false,
+        message: err.message,
+    });
+}
 
   res.status(500).json({
     success: false,

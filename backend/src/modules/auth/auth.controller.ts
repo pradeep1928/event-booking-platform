@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
-import { registerSchema } from './auth.validation.js';
+import { loginSchema, registerSchema } from './auth.validation.js';
 
 export class AuthController {
-  constructor(private readonly service = new AuthService()) {}
+  constructor(private readonly authService = new AuthService()) {}
 
   // old without asyncHandler old
 //   register = async (
@@ -38,7 +38,7 @@ export class AuthController {
 
   const payload = registerSchema.parse(req.body);
 
-  const user = await this.service.register(payload);
+  const user = await this.authService.register(payload);
 
   res.status(201).json({
     success: true,
@@ -50,6 +50,24 @@ export class AuthController {
       role: user.role,
     }, 
   });
+};
+
+login = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+
+    const payload =
+        loginSchema.parse(req.body);
+
+    const result =
+        await this.authService.login(payload);
+
+    res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        data: result,
+    });
 };
 
 

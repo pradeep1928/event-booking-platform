@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import { authConfig } from '../../config/auth.config.js';
 
-const SALT_ROUNDS = 12;
 
 export class PasswordService {
   async hash(password: string): Promise<string> {

@@ -28,4 +28,10 @@ export const registerSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Password must contain one special character'),
 });
 
+export const loginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(8),
+});
+
+export type LoginDto = z.infer<typeof loginSchema>;
 export type RegisterDto = z.infer<typeof registerSchema>;
