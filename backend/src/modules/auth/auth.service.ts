@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { AuthRepository } from './auth.repository.js';
 import type { RegisterDto } from './auth.validation.js';
 import {ConflictError} from '../../common/errors/conflict.error.js';
+import { passwordService } from '../../infrastructure/crypto/password.service.js';
 
 export class AuthService {
   constructor(private readonly repository = new AuthRepository()) {}
@@ -13,9 +14,8 @@ export class AuthService {
       throw new ConflictError('Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(
-      data.password,
-      Number(process.env.BCRYPT_SALT_ROUNDS),
+    const hashedPassword = await passwordService.hash(
+      data.password
     );
 
     return this.repository.createUser({
