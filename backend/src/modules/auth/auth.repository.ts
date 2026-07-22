@@ -8,6 +8,13 @@ export class AuthRepository {
     });
   }
 
+  async findById(id: string) {
+  return prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+}
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     return prisma.user.create({
       data,
@@ -24,4 +31,26 @@ export class AuthRepository {
     data,
   });
 }
+
+async findRefreshTokenByHash(
+  tokenHash: string,
+) {
+  return prisma.refreshToken.findUnique({
+    where: {
+      tokenHash,
+    },
+  });
+}
+
+async deleteRefreshToken(
+  id: string,
+) {
+  return prisma.refreshToken.delete({
+    where: {
+      id,
+    },
+  });
+}
+
+
 }

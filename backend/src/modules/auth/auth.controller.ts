@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
-import { loginSchema, registerSchema } from './auth.validation.js';
+import { loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 
 export class AuthController {
   constructor(private readonly authService = new AuthService()) {}
@@ -30,7 +30,7 @@ export class AuthController {
 //     }
 //   };
 
- // with asyncHandler
+ // with asyncHandler register user
   register = async (
   req: Request,
   res: Response,
@@ -52,6 +52,7 @@ export class AuthController {
   });
 };
 
+// Login user
 login = async (
     req: Request,
     res: Response,
@@ -70,6 +71,7 @@ login = async (
     });
 };
 
+// Test token 
 me = async (
   req: Request,
   res: Response,
@@ -80,5 +82,27 @@ me = async (
   });
 };
 
+// refresh token
+refreshToken = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+
+  const payload =
+    refreshTokenSchema.parse(
+      req.body,
+    );
+
+  const result =
+    await this.authService.refreshToken(
+      payload,
+    );
+
+  res.json({
+    success: true,
+    message: 'Token refreshed',
+    data: result,
+  });
+};
 
 }
