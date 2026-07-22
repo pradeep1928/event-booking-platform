@@ -1,124 +1,145 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
 import { loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
+import { successResponse } from '../../common/utils/api-response.js';
+import { AuthenticatedRequest } from './auth.types.js';
+import { UnauthorizedException } from '../../common/exceptions/UnauthorizedException.js';
 
 export class AuthController {
-  constructor(private readonly authService = new AuthService()) {}
+  constructor(private readonly authService = new AuthService()) { }
 
   // old without asyncHandler old
-//   register = async (
-//     req: Request,
-//     res: Response,
-//     next: NextFunction,
-//   ): Promise<void> => {
-//     try {
-//       const payload = registerSchema.parse(req.body);
+  //   register = async (
+  //     req: Request,
+  //     res: Response,
+  //     next: NextFunction,
+  //   ): Promise<void> => {
+  //     try {
+  //       const payload = registerSchema.parse(req.body);
 
-//       const user = await this.service.register(payload);
+  //       const user = await this.service.register(payload);
 
-//       res.status(201).json({
-//         success: true,
-//         data: {
-//           id: user.id,
-//           email: user.email,
-//           firstName: user.firstName,
-//           lastName: user.lastName,
-//         },
-//       });
-//     } catch (error) {
-//       next(error);
-//     }
-//   };
+  //       res.status(201).json({
+  //         success: true,
+  //         data: {
+  //           id: user.id,
+  //           email: user.email,
+  //           firstName: user.firstName,
+  //           lastName: user.lastName,
+  //         },
+  //       });
+  //     } catch (error) {
+  //       next(error);
+  //     }
+  //   };
 
- // with asyncHandler register user
+  // with asyncHandler register user
   register = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-
-  const payload = registerSchema.parse(req.body);
-
-  const user = await this.authService.register(payload);
-
-  res.status(201).json({
-    success: true,
-    data: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-    }, 
-  });
-};
-
-// Login user
-login = async (
     req: Request,
     res: Response,
-): Promise<void> => {
+  ): Promise<void> => {
+
+    const payload = registerSchema.parse(req.body);
+
+    const user = await this.authService.register(payload);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    });
+  };
+
+  // Login user
+  login = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
 
     const payload =
-        loginSchema.parse(req.body);
+      loginSchema.parse(req.body);
 
     const result =
-        await this.authService.login(payload);
+      await this.authService.login(payload);
 
     res.status(200).json({
-        success: true,
-        message: 'Login successful',
-        data: result,
+      success: true,
+      message: 'Login successful',
+      data: result,
     });
-};
+  };
 
-// Test token 
-me = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  res.json({
-    success: true,
-    data: req.user
-  });
-};
+  // Test token 
+  me = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    res.json({
+      success: true,
+      data: req.user
+    });
+  };
 
-// refresh token
-refreshToken = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+  // refresh token
+  refreshToken = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
 
-  const payload =
-    refreshTokenSchema.parse(
-      req.body,
+    const payload =
+      refreshTokenSchema.parse(
+        req.body,
+      );
+
+    const result =
+      await this.authService.refreshToken(
+        payload,
+      );
+
+    res.json({
+      success: true,
+      message: 'Token refreshed',
+      data: result,
+    });
+  };
+
+  // logout user
+  logout = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const { refreshToken } =
+      refreshTokenSchema.parse(req.body);
+
+    await this.authService.logout(refreshToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  };
+
+  // logout user all
+  logoutAll = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    await this.authService.logoutAll(req.user?.id);
+
+    successResponse(
+      res,
+      null,
+      'Logged out from all devices'
     );
-
-  const result =
-    await this.authService.refreshToken(
-      payload,
-    );
-
-  res.json({
-    success: true,
-    message: 'Token refreshed',
-    data: result,
-  });
-};
-
-// logout user
-logout = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const { refreshToken } =
-    refreshTokenSchema.parse(req.body);
-
-  await this.authService.logout(refreshToken);
-
-  res.status(200).json({
-    success: true,
-    message: 'Logged out successfully',
-  });
-};
+  };
 
 }

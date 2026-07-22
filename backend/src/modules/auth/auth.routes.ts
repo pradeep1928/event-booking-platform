@@ -36,4 +36,10 @@ router.post(
   asyncHandler(controller.logout),
 );
 
+// logout user all
+router.post(
+    '/logout-all',
+    authenticate,
+    asyncHandler(controller.logoutAll),
+);
 export default router;

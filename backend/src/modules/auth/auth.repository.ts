@@ -60,5 +60,13 @@ async deleteByJti(jti: string) {
   });
 }
 
+async revokeAllRefreshTokens(userId: string) {
+  return prisma.refreshToken.deleteMany({
+    where: {
+      userId,
+    },
+  });
+}
+
 
 }
