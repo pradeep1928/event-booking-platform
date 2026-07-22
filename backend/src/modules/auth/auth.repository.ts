@@ -68,5 +68,19 @@ async revokeAllRefreshTokens(userId: string) {
   });
 }
 
+async updatePassword(
+  userId: string,
+  password: string,
+) {
+  return prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      password,
+    },
+  });
+}
+
 
 }

@@ -9,6 +9,8 @@ import { passwordService } from '../../infrastructure/crypto/password.service.js
 import { LoginResponse } from './auth.types.js';
 import { UnauthorizedException } from '../../common/exceptions/UnauthorizedException.js';
 import { jwtService } from '../../infrastructure/jwt/jwt.service.js';
+import type { ChangePasswordDto } from './auth.validation.js';
+import { NotFoundException } from '../../common/exceptions/NotFoundException.js';
 
 export class AuthService {
     constructor(private readonly repository = new AuthRepository()) { }
@@ -191,6 +193,51 @@ export class AuthService {
 
     // logout user all 
     async logoutAll(userId: string): Promise<void> {
-  await this.repository.revokeAllRefreshTokens(userId);
-}
+        await this.repository.revokeAllRefreshTokens(userId);
+    }
+
+    // change password method
+    async changePassword(
+        userId: string,
+        data: ChangePasswordDto,
+    ): Promise<void> {
+
+        // Find user
+        const user = await this.repository.findById(userId);
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        // Verify current password
+        const isPasswordValid =
+            await passwordService.compare(
+                data.currentPassword,
+                user.password,
+            );
+
+        if (!isPasswordValid) {
+            throw new UnauthorizedException(
+                'Current password is incorrect',
+            );
+        }
+
+        // Hash new password
+        const hashedPassword =
+            await passwordService.hash(
+                data.newPassword,
+            );
+
+        // Update password
+        await this.repository.updatePassword(
+            userId,
+            hashedPassword,
+        );
+
+        // Logout from all devices
+        await this.repository.revokeAllRefreshTokens(
+            userId,
+        );
+    }
+
 }

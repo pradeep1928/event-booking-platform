@@ -42,4 +42,13 @@ router.post(
     authenticate,
     asyncHandler(controller.logoutAll),
 );
+
+// change password
+router.patch(
+  '/change-password',
+  authenticate,
+  asyncHandler(
+    controller.changePassword,
+  ),
+);
 export default router;
