@@ -82,5 +82,27 @@ async updatePassword(
   });
 }
 
+// update password using prisma transaction
+async updatePasswordAndRevokeSessions(
+  userId: string,
+  hashedPassword: string,
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    await tx.refreshToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  });
+}
 
 }

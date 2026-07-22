@@ -228,15 +228,21 @@ export class AuthService {
                 data.newPassword,
             );
 
-        // Update password
-        await this.repository.updatePassword(
+        // // Update password
+        // await this.repository.updatePassword(
+        //     userId,
+        //     hashedPassword,
+        // );
+
+        // // Logout from all devices
+        // await this.repository.revokeAllRefreshTokens(
+        //     userId,
+        // );
+
+        // update password and revoke sessions
+        await this.repository.updatePasswordAndRevokeSessions(
             userId,
             hashedPassword,
-        );
-
-        // Logout from all devices
-        await this.repository.revokeAllRefreshTokens(
-            userId,
         );
     }
 
