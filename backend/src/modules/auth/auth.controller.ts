@@ -105,4 +105,20 @@ refreshToken = async (
   });
 };
 
+// logout user
+logout = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const { refreshToken } =
+    refreshTokenSchema.parse(req.body);
+
+  await this.authService.logout(refreshToken);
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
+};
+
 }

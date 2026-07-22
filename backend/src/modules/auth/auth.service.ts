@@ -181,5 +181,11 @@ export class AuthService {
         };
     }
 
+    // logout user
+    async logout(refreshToken: string): Promise<void> {
+        const payload =
+            await jwtService.verifyRefreshToken(refreshToken);
 
+        await this.repository.deleteByJti(payload.jti);
+    }
 }

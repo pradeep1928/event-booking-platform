@@ -2,7 +2,8 @@ import { SignJWT, jwtVerify } from 'jose';
 import crypto from 'node:crypto';
 
 import { authConfig } from '../../config/auth.config.js';
-import type { AccessTokenPayload, RefreshTokenPayload  } from './jwt.types.js';
+// import type { AccessTokenPayload, RefreshTokenPayload  } from './jwt.types.js';
+import type {AccessTokenPayload, RefreshTokenPayload} from './jwt.validation.js'
 
 const encoder = new TextEncoder();
 
@@ -60,7 +61,7 @@ export class JwtService {
 
   async verifyRefreshToken(
     token: string,
-  ): Promise<AccessTokenPayload > {
+  ): Promise<RefreshTokenPayload > {
     const { payload } = await jwtVerify(
       token,
       encoder.encode(
@@ -68,7 +69,7 @@ export class JwtService {
       ),
     );
 
-    return payload as AccessTokenPayload ;
+    return payload as RefreshTokenPayload ;
   }
 
   getRefreshTokenExpiryDate(): Date {

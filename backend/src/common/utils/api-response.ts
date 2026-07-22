@@ -22,6 +22,6 @@ export function errorResponse(
   return res.status(statusCode).json({
     success: false,
     message,
-    errors,
+    ...(errors ? { errors } : {}),
   });
 }

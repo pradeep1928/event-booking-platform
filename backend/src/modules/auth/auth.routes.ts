@@ -30,4 +30,10 @@ router.post(
   ),
 );
 
+// logout user
+router.post(
+  '/logout',
+  asyncHandler(controller.logout),
+);
+
 export default router;

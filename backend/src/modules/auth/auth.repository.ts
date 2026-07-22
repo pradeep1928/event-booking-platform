@@ -52,5 +52,13 @@ async deleteRefreshToken(
   });
 }
 
+async deleteByJti(jti: string) {
+  return prisma.refreshToken.deleteMany({
+    where: {
+      jti,
+    },
+  });
+}
+
 
 }
