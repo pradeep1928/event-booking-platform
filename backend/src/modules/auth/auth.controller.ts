@@ -1,9 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
+
 import { AuthService } from './auth.service.js';
 import { loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 import { successResponse } from '../../common/utils/api-response.js';
-import { AuthenticatedRequest } from './auth.types.js';
 import { UnauthorizedException } from '../../common/exceptions/UnauthorizedException.js';
+import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../../common/utils/cookie.js';
 
 export class AuthController {
   constructor(private readonly authService = new AuthService()) { }
@@ -43,16 +44,29 @@ export class AuthController {
 
     const user = await this.authService.register(payload);
 
-    res.status(201).json({
-      success: true,
-      data: {
+    // res.status(201).json({
+    //   success: true,
+    //   data: {
+    //     id: user.id,
+    //     email: user.email,
+    //     firstName: user.firstName,
+    //     lastName: user.lastName,
+    //     role: user.role,
+    //   },
+    // });
+
+    successResponse(
+    res,
+    {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-      },
-    });
+    },
+    'User registered successfully',
+    201,
+);
   };
 
   // Login user
@@ -67,11 +81,16 @@ export class AuthController {
     const result =
       await this.authService.login(payload);
 
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      data: result,
-    });
+    setRefreshTokenCookie(res, result.refreshToken)
+
+    successResponse(
+      res,
+      {
+        accessToken: result.accessToken,
+        user: result.user,
+      },
+      'Login successful',
+    );
   };
 
   // Test token 
@@ -79,10 +98,10 @@ export class AuthController {
     req: Request,
     res: Response,
   ): Promise<void> => {
-    res.json({
-      success: true,
-      data: req.user
-    });
+  successResponse(
+    res,
+    req.user,
+);
   };
 
   // refresh token
@@ -92,20 +111,20 @@ export class AuthController {
   ): Promise<void> => {
 
     const payload =
-      refreshTokenSchema.parse(
-        req.body,
-      );
+      refreshTokenSchema.parse({
+        refreshToken: req.cookies.refreshToken,
+      });
 
-    const result =
-      await this.authService.refreshToken(
-        payload,
-      );
+    const result = await this.authService.refreshToken(payload);
+    setRefreshTokenCookie(res, result.refreshToken);
 
-    res.json({
-      success: true,
-      message: 'Token refreshed',
-      data: result,
-    });
+    successResponse(
+      res,
+      {
+        accessToken: result.accessToken,
+      },
+      'Token refreshed',
+    );
   };
 
   // logout user
@@ -114,14 +133,18 @@ export class AuthController {
     res: Response,
   ): Promise<void> => {
     const { refreshToken } =
-      refreshTokenSchema.parse(req.body);
+      refreshTokenSchema.parse({
+        refreshToken: req.cookies.refreshToken,
+      });
 
     await this.authService.logout(refreshToken);
+    clearRefreshTokenCookie(res);
 
-    res.status(200).json({
-      success: true,
-      message: 'Logged out successfully',
-    });
+    successResponse(
+      res,
+      null,
+      'Logged out successfully',
+    );
   };
 
   // logout user all
@@ -134,6 +157,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
     await this.authService.logoutAll(req.user?.id);
+    clearRefreshTokenCookie(res);
 
     successResponse(
       res,

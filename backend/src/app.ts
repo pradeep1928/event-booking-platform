@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 
 // Import from files
 import { errorHandler } from './common/middlware/error.middleware.js';
@@ -20,6 +21,8 @@ app.use(cors());
 app.use(compression());
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 // API routes
 app.use('/api/v1', routes);
