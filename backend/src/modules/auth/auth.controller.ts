@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 
 import { AuthService } from './auth.service.js';
-import { changePasswordSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
+import { changePasswordSchema, forgotPasswordSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 import { successResponse } from '../../common/utils/api-response.js';
 import { UnauthorizedException } from '../../common/exceptions/UnauthorizedException.js';
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../../common/utils/cookie.js';
@@ -194,4 +194,25 @@ export class AuthController {
     );
   };
 
+
+  forgotPassword = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+
+  const payload =
+    forgotPasswordSchema.parse(
+      req.body,
+    );
+
+  await this.authService.forgotPassword(
+    payload,
+  );
+
+  successResponse(
+    res,
+    null,
+    'If an account exists, a password reset link has been sent.',
+  );
+};
 }

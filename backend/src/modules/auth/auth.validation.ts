@@ -62,6 +62,15 @@ export const changePasswordSchema = z.object({
     path: ['newPassword'],
   },
 );
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .email()
+    .trim()
+    .toLowerCase(),
+});
+
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
 export type RegisterDto = z.infer<typeof registerSchema>;

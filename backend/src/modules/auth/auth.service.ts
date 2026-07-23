@@ -12,6 +12,10 @@ import { jwtService } from '../../infrastructure/jwt/jwt.service.js';
 import type { ChangePasswordDto } from './auth.validation.js';
 import { NotFoundException } from '../../common/exceptions/NotFoundException.js';
 
+import { ForgotPasswordDto } from './auth.validation.js';
+import { mailService } from '../../infrastructure/mail/mail.service.js';
+import { renderForgotPasswordTemplate } from '../../infrastructure/mail/templates/forgot-password.js';
+
 export class AuthService {
     constructor(private readonly repository = new AuthRepository()) { }
 
@@ -246,4 +250,52 @@ export class AuthService {
         );
     }
 
+    // forgot password reset
+    async forgotPassword(
+  data: ForgotPasswordDto,
+): Promise<void> {
+
+  // Find user
+  const user = await this.repository.findUserByEmail(
+    data.email,
+  );
+
+  /**
+   * Never reveal whether the email exists.
+   * Always return success.
+   */
+  if (!user) {
+    return;
+  }
+
+  // Generate secure random token
+  const token = crypto
+    .randomBytes(32)
+    .toString('hex');
+
+  // Hash before storing
+  const tokenHash =
+    hashService.sha256(token);
+
+  // Token expires in 15 minutes
+  const expiresAt = new Date(
+    Date.now() + 15 * 60 * 1000,
+  );
+
+  // Replace any existing reset token
+  await this.repository.replacePasswordResetToken({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
+  // Send email
+  await mailService.send({
+    to: user.email,
+    subject: 'Reset your password',
+    html: renderForgotPasswordTemplate(
+      token,
+    ),
+  });
+}
 }

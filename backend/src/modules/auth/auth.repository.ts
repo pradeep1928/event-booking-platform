@@ -153,34 +153,58 @@ async deleteAllPasswordResetTokens(
 }
 
 // prisma transaction for reset password
-async resetPasswordTransaction(
+async resetPasswordTransaction(data: {
   userId: string,
   hashedPassword: string,
   resetTokenId: string,
+}
 ) {
   return prisma.$transaction(async (tx) => {
 
     await tx.user.update({
       where: {
-        id: userId,
+        id: data.userId,
       },
       data: {
-        password: hashedPassword,
+        password: data.hashedPassword,
       },
     });
 
     await tx.passwordResetToken.delete({
       where: {
-        id: resetTokenId,
+        id: data.resetTokenId,
       },
     });
 
     await tx.refreshToken.deleteMany({
       where: {
-        userId,
+        userId: data.userId,
       },
     });
 
   });
 }
+
+// delete all old password reset token and add new one
+async replacePasswordResetToken(data: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  return prisma.$transaction(async (tx) => {
+
+    await tx.passwordResetToken.deleteMany({
+      where: {
+        userId: data.userId,
+      },
+    });
+
+    return tx.passwordResetToken.create({
+      data,
+    });
+
+  });
+}
+
+
 }
