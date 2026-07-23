@@ -7,6 +7,7 @@ import {
   loginSchema,
   refreshTokenSchema,
   registerSchema,
+  resendVerificationEmailSchema,
   resetPasswordSchema,
   verifyEmailSchema,
 } from "./auth.validation.js";
@@ -182,5 +183,19 @@ export class AuthController {
     await this.authService.verifyEmail(payload);
 
     successResponse(res, null, "Email verified successfully");
+  };
+
+  resendVerificationEmail = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const payload = resendVerificationEmailSchema.parse(req.body);
+    await this.authService.resendVerificationEmail(payload);
+
+    successResponse(
+      res,
+      null,
+      "If the account exists and is not verified, a verification email has been sent.",
+    );
   };
 }

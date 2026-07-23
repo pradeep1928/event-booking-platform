@@ -7,6 +7,7 @@ import type {
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
+  ResendVerificationEmailDto,
   ResetPasswordDto,
   VerifyEmailDto,
 } from "./auth.validation.js";
@@ -312,6 +313,7 @@ export class AuthService {
     });
   }
 
+  // verify email
   async verifyEmail(data: VerifyEmailDto): Promise<void> {
     // Hash incoming token
     const tokenHash = hashService.sha256(data.token);
@@ -339,5 +341,49 @@ export class AuthService {
       userId: stored.user.id,
       verificationTokenId: stored.id,
     });
+  }
+
+  // resend vefification email
+  async resendVerificationEmail(
+    data: ResendVerificationEmailDto,
+  ): Promise<void> {
+    const user = await this.repository.findUserByEmail(data.email);
+
+    // Prevent email enumeration.
+    if (!user) {
+      return;
+    }
+
+    //  Already verified.
+    if (user.isVerified) {
+      return;
+    }
+
+    // Generate new token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // Hash token
+    const tokenHash = hashService.sha256(token);
+
+    // Expire in 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Replace previous token
+    await this.repository.replaceEmailVerificationToken({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    // Send email
+    try {
+      await mailService.send({
+        to: user.email,
+        subject: "Verify your email",
+        html: renderVerifyEmailTemplate(token),
+      });
+    } catch (error) {
+      logger.error(error, "Failed to resend verification email");
+    }
   }
 }

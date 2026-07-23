@@ -35,11 +35,18 @@ router.patch(
 );
 
 // forgot password
-(router.post("/forgot-password", asyncHandler(controller.forgotPassword)),
+router.post("/forgot-password", asyncHandler(controller.forgotPassword)),
   // reset password
-  router.post("/reset-password", asyncHandler(controller.resetPassword)));
+  
+router.post("/reset-password", asyncHandler(controller.resetPassword));
 
 // verify email
 router.post("/verify-email", asyncHandler(controller.verifyEmail));
+
+// resend verify email
+router.post(
+  "/resend-verification-email",
+  asyncHandler(controller.resendVerificationEmail),
+);
 
 export default router;
