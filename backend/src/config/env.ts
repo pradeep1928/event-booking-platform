@@ -27,6 +27,14 @@ const envSchema = z.object({
   BCRYPT_SALT_ROUNDS: z.coerce.number(),
 
   REDIS_URL: z.string(),
+
+  // mail configuaration
+  MAIL_HOST: z.string().min(1),
+  MAIL_PORT: z.coerce.number().int().positive(),
+  MAIL_USER: z.string().email(),
+  MAIL_PASSWORD: z.string().min(1),
+  MAIL_FROM: z.string().min(1),
+  APP_URL: z.string().url(),
 });
 
 export const env = envSchema.parse(process.env);

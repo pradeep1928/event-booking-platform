@@ -105,4 +105,82 @@ async updatePasswordAndRevokeSessions(
   });
 }
 
+// password reset
+async savePasswordResetToken(data: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  return prisma.passwordResetToken.create({
+    data,
+  });
+}
+
+// find password reset token by hash
+async findPasswordResetTokenByHash(
+  tokenHash: string,
+) {
+  return prisma.passwordResetToken.findUnique({
+    where: {
+      tokenHash,
+    },
+    include: {
+      user: true,
+    },
+  });
+}
+
+// delete password reset token
+async deletePasswordResetToken(
+  id: string,
+) {
+  return prisma.passwordResetToken.delete({
+    where: {
+      id,
+    },
+  });
+}
+
+// delete all password reset token
+async deleteAllPasswordResetTokens(
+  userId: string,
+) {
+  return prisma.passwordResetToken.deleteMany({
+    where: {
+      userId,
+    },
+  });
+}
+
+// prisma transaction for reset password
+async resetPasswordTransaction(
+  userId: string,
+  hashedPassword: string,
+  resetTokenId: string,
+) {
+  return prisma.$transaction(async (tx) => {
+
+    await tx.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    await tx.passwordResetToken.delete({
+      where: {
+        id: resetTokenId,
+      },
+    });
+
+    await tx.refreshToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+
+  });
+}
 }
