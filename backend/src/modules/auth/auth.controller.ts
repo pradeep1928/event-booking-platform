@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 
 import { AuthService } from './auth.service.js';
-import { changePasswordSchema, forgotPasswordSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
+import { changePasswordSchema, forgotPasswordSchema, loginSchema, refreshTokenSchema, registerSchema, resetPasswordSchema } from './auth.validation.js';
 import { successResponse } from '../../common/utils/api-response.js';
 import { UnauthorizedException } from '../../common/exceptions/UnauthorizedException.js';
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../../common/utils/cookie.js';
@@ -195,24 +195,48 @@ export class AuthController {
   };
 
 
+  // forgot password
   forgotPassword = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
 
-  const payload =
-    forgotPasswordSchema.parse(
-      req.body,
+    const payload =
+      forgotPasswordSchema.parse(
+        req.body,
+      );
+
+    await this.authService.forgotPassword(
+      payload,
     );
 
-  await this.authService.forgotPassword(
-    payload,
-  );
+    successResponse(
+      res,
+      null,
+      'If an account exists, a password reset link has been sent.',
+    );
+  };
 
-  successResponse(
-    res,
-    null,
-    'If an account exists, a password reset link has been sent.',
-  );
-};
+  // reset password 
+  resetPassword = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+
+    const payload =
+      resetPasswordSchema.parse(
+        req.body,
+      );
+
+    await this.authService.resetPassword(
+      payload,
+    );
+
+    successResponse(
+      res,
+      null,
+      'Password reset successfully',
+    );
+
+  };
 }

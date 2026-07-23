@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { AuthController } from './auth.controller.js';
-import { asyncHandler } from '../../common/utils/async-handler.js';
-import { authenticate } from '../../common/middlware/auth.middleware.js';
+import { Router } from "express";
+import { AuthController } from "./auth.controller.js";
+import { asyncHandler } from "../../common/utils/async-handler.js";
+import { authenticate } from "../../common/middlware/auth.middleware.js";
 
 const router = Router();
 const controller = new AuthController();
@@ -10,45 +10,34 @@ const controller = new AuthController();
 // router.post('/register', controller.register);
 
 // with asyncHandler register user
-router.post('/register', asyncHandler(controller.register));
+router.post("/register", asyncHandler(controller.register));
 
 // login user
-router.post('/login', asyncHandler(controller.login));
+router.post("/login", asyncHandler(controller.login));
 
 // test token
-router.get(
-  '/me',
-  authenticate,
-  asyncHandler(controller.me),
-)
+router.get("/me", authenticate, asyncHandler(controller.me));
 
 // refresh token
-router.post(
-  '/refresh-token',
-  asyncHandler(
-    controller.refreshToken,
-  ),
-);
+router.post("/refresh-token", asyncHandler(controller.refreshToken));
 
 // logout user
-router.post(
-  '/logout',
-  asyncHandler(controller.logout),
-);
+router.post("/logout", asyncHandler(controller.logout));
 
 // logout user all
-router.post(
-    '/logout-all',
-    authenticate,
-    asyncHandler(controller.logoutAll),
-);
+router.post("/logout-all", authenticate, asyncHandler(controller.logoutAll));
 
 // change password
 router.patch(
-  '/change-password',
+  "/change-password",
   authenticate,
-  asyncHandler(
-    controller.changePassword,
-  ),
+  asyncHandler(controller.changePassword),
 );
+
+// forgot password
+router.post("/forgot-password", asyncHandler(controller.forgotPassword)),
+
+// reset password
+router.post("/reset-password", asyncHandler(controller.resetPassword));
+
 export default router;

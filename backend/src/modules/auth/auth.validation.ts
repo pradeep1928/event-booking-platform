@@ -70,6 +70,37 @@ export const forgotPasswordSchema = z.object({
     .toLowerCase(),
 });
 
+export const resetPasswordSchema =
+  z.object({
+
+    token: z
+      .string()
+      .min(1),
+
+    password: z
+      .string()
+      .min(8)
+      .max(100)
+      .regex(
+        /[A-Z]/,
+        'Password must contain one uppercase letter',
+      )
+      .regex(
+        /[a-z]/,
+        'Password must contain one lowercase letter',
+      )
+      .regex(
+        /[0-9]/,
+        'Password must contain one number',
+      )
+      .regex(
+        /[^A-Za-z0-9]/,
+        'Password must contain one special character',
+      ),
+
+  });
+
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;

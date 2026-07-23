@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 
 import { hashService } from '../../infrastructure/crypto/hash.service.js';
 import { AuthRepository } from './auth.repository.js';
-import type { LoginDto, RefreshTokenDto, RegisterDto } from './auth.validation.js';
+import type { LoginDto, RefreshTokenDto, RegisterDto, ResetPasswordDto } from './auth.validation.js';
 import { ConflictError } from '../../common/errors/conflict.error.js';
 import { passwordService } from '../../infrastructure/crypto/password.service.js';
 import { LoginResponse } from './auth.types.js';
@@ -252,50 +252,108 @@ export class AuthService {
 
     // forgot password reset
     async forgotPassword(
-  data: ForgotPasswordDto,
-): Promise<void> {
+        data: ForgotPasswordDto,
+    ): Promise<void> {
 
-  // Find user
-  const user = await this.repository.findUserByEmail(
-    data.email,
-  );
+        // Find user
+        const user = await this.repository.findUserByEmail(
+            data.email,
+        );
 
-  /**
-   * Never reveal whether the email exists.
-   * Always return success.
-   */
-  if (!user) {
-    return;
-  }
+        /**
+         * Never reveal whether the email exists.
+         * Always return success.
+         */
+        if (!user) {
+            return;
+        }
 
-  // Generate secure random token
-  const token = crypto
-    .randomBytes(32)
-    .toString('hex');
+        // Generate secure random token
+        const token = crypto
+            .randomBytes(32)
+            .toString('hex');
 
-  // Hash before storing
-  const tokenHash =
-    hashService.sha256(token);
+        // Hash before storing
+        const tokenHash =
+            hashService.sha256(token);
 
-  // Token expires in 15 minutes
-  const expiresAt = new Date(
-    Date.now() + 15 * 60 * 1000,
-  );
+        // Token expires in 15 minutes
+        const expiresAt = new Date(
+            Date.now() + 15 * 60 * 1000,
+        );
 
-  // Replace any existing reset token
-  await this.repository.replacePasswordResetToken({
-    userId: user.id,
-    tokenHash,
-    expiresAt,
-  });
+        // Replace any existing reset token
+        await this.repository.replacePasswordResetToken({
+            userId: user.id,
+            tokenHash,
+            expiresAt,
+        });
 
-  // Send email
-  await mailService.send({
-    to: user.email,
-    subject: 'Reset your password',
-    html: renderForgotPasswordTemplate(
-      token,
-    ),
-  });
-}
+        // Send email
+        await mailService.send({
+            to: user.email,
+            subject: 'Reset your password',
+            html: renderForgotPasswordTemplate(
+                token,
+            ),
+        });
+    }
+
+    // reset password 
+    async resetPassword(
+        data: ResetPasswordDto,
+    ): Promise<void> {
+
+        // Hash incoming token
+        const tokenHash =
+            hashService.sha256(
+                data.token,
+            );
+
+        // Find token
+        const stored =
+            await this.repository.findPasswordResetTokenByHash(
+                tokenHash,
+            );
+
+        if (!stored) {
+            throw new UnauthorizedException(
+                'Invalid or expired reset token',
+            );
+        }
+
+        // Check expiry
+        if (
+            stored.expiresAt <
+            new Date()
+        ) {
+
+            await this.repository.deletePasswordResetToken(
+                stored.id,
+            );
+
+            throw new UnauthorizedException(
+                'Reset token has expired',
+            );
+
+        }
+
+        // Hash new password
+        const hashedPassword =
+            await passwordService.hash(
+                data.password,
+            );
+
+        // Transaction
+        await this.repository.resetPasswordTransaction({
+            userId:
+                stored.user.id,
+
+            hashedPassword,
+
+            resetTokenId:
+                stored.id,
+        });
+
+    }
 }
