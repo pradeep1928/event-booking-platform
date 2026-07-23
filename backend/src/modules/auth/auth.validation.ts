@@ -1,31 +1,28 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const registerSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(2, 'First name must contain at least 2 characters')
+    .min(2, "First name must contain at least 2 characters")
     .max(50),
 
   lastName: z
     .string()
     .trim()
-    .min(2, 'Last name must contain at least 2 characters')
+    .min(2, "Last name must contain at least 2 characters")
     .max(50),
 
-  email: z
-    .email()
-    .trim()
-    .toLowerCase(),
+  email: z.email().trim().toLowerCase(),
 
   password: z
     .string()
     .min(8)
     .max(100)
-    .regex(/[A-Z]/, 'Password must contain one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain one special character'),
+    .regex(/[A-Z]/, "Password must contain one uppercase letter")
+    .regex(/[a-z]/, "Password must contain one lowercase letter")
+    .regex(/[0-9]/, "Password must contain one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain one special character"),
 });
 
 export const loginSchema = z.object({
@@ -37,69 +34,46 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z
-    .string()
-    .min(8),
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(8),
 
-  newPassword: z
-    .string()
-    .min(8)
-    .max(100)
-    .regex(/[A-Z]/, 'Password must contain one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain one number')
-    .regex(
-      /[^A-Za-z0-9]/,
-      'Password must contain one special character',
-    ),
-})
-.refine(
-  (data) => data.currentPassword !== data.newPassword,
-  {
-    message:
-      'New password must be different from current password',
-    path: ['newPassword'],
-  },
-);
-
-export const forgotPasswordSchema = z.object({
-  email: z
-    .email()
-    .trim()
-    .toLowerCase(),
-});
-
-export const resetPasswordSchema =
-  z.object({
-
-    token: z
-      .string()
-      .min(1),
-
-    password: z
+    newPassword: z
       .string()
       .min(8)
       .max(100)
-      .regex(
-        /[A-Z]/,
-        'Password must contain one uppercase letter',
-      )
-      .regex(
-        /[a-z]/,
-        'Password must contain one lowercase letter',
-      )
-      .regex(
-        /[0-9]/,
-        'Password must contain one number',
-      )
-      .regex(
-        /[^A-Za-z0-9]/,
-        'Password must contain one special character',
-      ),
-
+      .regex(/[A-Z]/, "Password must contain one uppercase letter")
+      .regex(/[a-z]/, "Password must contain one lowercase letter")
+      .regex(/[0-9]/, "Password must contain one number")
+      .regex(/[^A-Za-z0-9]/, "Password must contain one special character"),
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must be different from current password",
+    path: ["newPassword"],
   });
 
+export const forgotPasswordSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+
+  password: z
+    .string()
+    .min(8)
+    .max(100)
+    .regex(/[A-Z]/, "Password must contain one uppercase letter")
+    .regex(/[a-z]/, "Password must contain one lowercase letter")
+    .regex(/[0-9]/, "Password must contain one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain one special character"),
+});
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
+export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>;
 export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;

@@ -206,5 +206,97 @@ async replacePasswordResetToken(data: {
   });
 }
 
+// create email verification token
+async saveEmailVerificationToken(data: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  return prisma.emailVerificationToken.create({
+    data,
+  });
+}
+
+// find email verification token
+async findEmailVerificationTokenByHash(
+  tokenHash: string,
+) {
+  return prisma.emailVerificationToken.findUnique({
+    where: {
+      tokenHash,
+    },
+    include: {
+      user: true,
+    },
+  });
+}
+
+// delete email verification token
+async deleteEmailVerificationToken(
+  id: string,
+) {
+  return prisma.emailVerificationToken.delete({
+    where: {
+      id,
+    },
+  });
+}
+
+// delete all email verification token
+async deleteAllEmailVerificationTokens(
+  userId: string,
+) {
+  return prisma.emailVerificationToken.deleteMany({
+    where: {
+      userId,
+    },
+  });
+}
+
+// prisma transaction for replace email verification token - delete all old and add new one
+async replaceEmailVerificationToken(data: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  return prisma.$transaction(async (tx) => {
+
+    await tx.emailVerificationToken.deleteMany({
+      where: {
+        userId: data.userId,
+      },
+    });
+
+    return tx.emailVerificationToken.create({
+      data,
+    });
+
+  });
+}
+
+// verify email and delete email verification token
+async markEmailVerifiedTransaction(data: {
+  userId: string;
+  verificationTokenId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+
+    await tx.user.update({
+      where: {
+        id: data.userId,
+      },
+      data: {
+        isVerified: true,
+      },
+    });
+
+    await tx.emailVerificationToken.delete({
+      where: {
+        id: data.verificationTokenId,
+      },
+    });
+
+  });
+}
 
 }
