@@ -15,3 +15,5 @@ docker compose -f docker/compose.yml up -d
 
 <!-- migrate prisma schema - run in backend -->
 npx prisma migrate dev --name add_password_reset_token
+
+npx prisma generate

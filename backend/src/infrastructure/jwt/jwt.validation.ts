@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { Role } from '@prisma/client'
 
 
 const accessTokenPayloadSchema = z.object({
   sub: z.string(),
   email: z.string().email(),
-  role: z.enum(["USER", "ADMIN"]),
+  role: z.enum(Role),
 });
 
 export const refreshTokenPayloadSchema = z.object({

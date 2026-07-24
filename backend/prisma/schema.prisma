@@ -14,6 +14,7 @@ datasource db {
 
 enum Role {
   USER
+  ORGANIZER
   ADMIN
 }
 
@@ -30,6 +31,7 @@ model User {
   password    String
   role        Role     @default(USER)
   isVerified  Boolean  @default(false)
+  isActive Boolean @default(true)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
