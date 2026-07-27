@@ -200,6 +200,7 @@ export class AuthService {
     await this.repository.deleteByJti(payload.jti);
   }
 
+  
   // logout user all
   async logoutAll(userId: string): Promise<void> {
     await this.repository.revokeAllRefreshTokens(userId);
