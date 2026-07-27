@@ -107,4 +107,56 @@ export class UserRepository {
       },
     });
   }
+
+  // update user status - active or inactive
+  async updateStatus(id: string, isActive: boolean) {
+    return prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        isActive,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+      },
+    });
+  }
+
+  // prisma transaction for update user status - active or inactive
+  async updateStatusTransaction(id: string, isActive: boolean) {
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: {
+          id,
+        },
+        data: {
+          isActive,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          isActive: true,
+        },
+      });
+
+      if (!isActive) {
+        await tx.refreshToken.deleteMany({
+          where: {
+            userId: id,
+          },
+        });
+      }
+
+      return user;
+    });
+  }
 }

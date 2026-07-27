@@ -37,4 +37,12 @@ router.patch(
   authorize(Role.ADMIN),
   asyncHandler(controller.updateRole),
 );
+
+// update user status - active or inactive
+router.patch(
+  "/:id/status",
+  authenticate,
+  authorize(Role.ADMIN),
+  asyncHandler(controller.updateStatus),
+);
 export default router;

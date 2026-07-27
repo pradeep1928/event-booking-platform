@@ -2,9 +2,15 @@ import { Request, Response } from "express";
 
 import { UserService } from "./user.service.js";
 
-import { userIdParamsSchema, getUsersQuerySchema , updateUserRoleBodySchema } from "./user.validation.js";
+import {
+  userIdParamsSchema,
+  getUsersQuerySchema,
+  updateUserRoleSchema,
+  updateUserStatusSchema,
+} from "./user.validation.js";
 
 import { successResponse } from "../../common/utils/api-response.js";
+import { UnauthorizedException } from "../../common/exceptions/UnauthorizedException.js";
 
 export class UserController {
   constructor(private readonly service = new UserService()) {}
@@ -23,28 +29,25 @@ export class UserController {
     successResponse(res, user);
   };
 
-
   // update role - user -> org, org -> user
-  updateRole = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-
-  const payload =
-    updateUserRoleBodySchema.parse({
+  updateRole = async (req: Request, res: Response): Promise<void> => {
+    const payload = updateUserRoleSchema.parse({
       ...req.params,
       ...req.body,
     });
 
-  const result =
-    await this.service.updateRole(
-      payload,
-    );
+    const result = await this.service.updateRole(payload);
+    successResponse(res, result, "User role updated successfully");
+  };
 
-  successResponse(
-    res,
-    result,
-    'User role updated successfully',
-  );
-};
+  // update user status - active or inactive
+  updateStatus = async (req: Request, res: Response): Promise<void> => {
+    const payload = updateUserStatusSchema.parse({
+      ...req.params,
+      ...req.body,
+    });
+
+    const result = await this.service.updateStatus(req.user!.id, payload);
+    successResponse(res, result, "User status updated successfully");
+  };
 }

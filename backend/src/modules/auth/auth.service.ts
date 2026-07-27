@@ -92,6 +92,12 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password");
     }
 
+    if (!user.isActive) {
+      throw new ForbiddenException(
+        "Your account has been deactivated. Please contact support.",
+      );
+    }
+    
     if (!user.isVerified) {
       throw new ForbiddenException(
         "Please verify your email before logging in.",
@@ -200,7 +206,6 @@ export class AuthService {
     await this.repository.deleteByJti(payload.jti);
   }
 
-  
   // logout user all
   async logoutAll(userId: string): Promise<void> {
     await this.repository.revokeAllRefreshTokens(userId);
@@ -388,28 +393,18 @@ export class AuthService {
     }
   }
 
-
   // Validate authenticated user
-  async validateAuthenticatedUser(
-  userId: string,
-) {
-  const user =
-    await this.repository.findActiveUserById(
-      userId,
-    );
+  async validateAuthenticatedUser(userId: string) {
+    const user = await this.repository.findActiveUserById(userId);
 
-  if (!user) {
-    throw new UnauthorizedException(
-      'User not found',
-    );
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException("Your account has been deactivated");
+    }
+
+    return user;
   }
-
-  if (!user.isActive) {
-    throw new ForbiddenException(
-      'Your account has been deactivated',
-    );
-  }
-
-  return user;
-}
 }

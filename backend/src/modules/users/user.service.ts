@@ -2,8 +2,12 @@ import { Role } from "@prisma/client";
 import { BadRequestException } from "../../common/exceptions/BadRequestException.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { UserRepository } from "./user.repository.js";
-import { GetUserByIdDto, GetUsersDto, UpdateUserRoleDto } from "./user.validation.js";
-
+import {
+  GetUserByIdDto,
+  GetUsersDto,
+  UpdateUserRoleDto,
+  UpdateUserStatusDto,
+} from "./user.validation.js";
 
 export class UserService {
   constructor(private readonly repository = new UserRepository()) {}
@@ -22,7 +26,6 @@ export class UserService {
       },
     };
   }
-  
 
   // Get user by id
   async findById(data: GetUserByIdDto) {
@@ -34,7 +37,6 @@ export class UserService {
 
     return user;
   }
-
 
   // update role - user -> org, org -> user
   async updateRole(data: UpdateUserRoleDto) {
@@ -55,5 +57,27 @@ export class UserService {
     }
 
     return this.repository.updateRole(data.id, data.role);
+  }
+  
+
+  // update user status - active or inactive
+  async updateStatus(currentUserId: string, data: UpdateUserStatusDto) {
+    const user = await this.repository.findById(data.id);
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (currentUserId === user.id && !data.isActive) {
+      throw new BadRequestException("You cannot deactivate your own account");
+    }
+
+    if (user.isActive === data.isActive) {
+      throw new BadRequestException(
+        data.isActive ? "User is already active" : "User is already inactive",
+      );
+    }
+
+    return this.repository.updateStatusTransaction(data.id, data.isActive);
   }
 }
