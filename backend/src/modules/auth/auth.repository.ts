@@ -1,5 +1,5 @@
-import type { Prisma, User } from '@prisma/client';
-import { prisma } from '../../common/prisma/prisma.js';
+import type { Prisma, User } from "@prisma/client";
+import { prisma } from "../../common/prisma/prisma.js";
 
 export class AuthRepository {
   async findUserByEmail(email: string): Promise<User | null> {
@@ -9,294 +9,280 @@ export class AuthRepository {
   }
 
   async findById(id: string) {
-  return prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
-}
+    return prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     return prisma.user.create({
       data,
     });
   }
 
-  async saveRefreshToken(data: {
-  jti: string;
-  tokenHash: string;
-  expiresAt: Date;
-  userId: string;
-}) {
-  return prisma.refreshToken.create({
-    data,
-  });
-}
-
-async findRefreshTokenByHash(
-  tokenHash: string,
-) {
-  return prisma.refreshToken.findUnique({
-    where: {
-      tokenHash,
-    },
-  });
-}
-
-async deleteRefreshToken(
-  id: string,
-) {
-  return prisma.refreshToken.delete({
-    where: {
-      id,
-    },
-  });
-}
-
-async deleteByJti(jti: string) {
-  return prisma.refreshToken.deleteMany({
-    where: {
-      jti,
-    },
-  });
-}
-
-async revokeAllRefreshTokens(userId: string) {
-  return prisma.refreshToken.deleteMany({
-    where: {
-      userId,
-    },
-  });
-}
-
-async updatePassword(
-  userId: string,
-  password: string,
-) {
-  return prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      password,
-    },
-  });
-}
-
-// update password using prisma transaction
-async updatePasswordAndRevokeSessions(
-  userId: string,
-  hashedPassword: string,
-): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
+  // find active user by id
+  async findActiveUserById(id: string) {
+    return prisma.user.findUnique({
       where: {
-        id: userId,
+        id,
       },
-      data: {
-        password: hashedPassword,
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
       },
     });
+  }
 
-    await tx.refreshToken.deleteMany({
+  async saveRefreshToken(data: {
+    jti: string;
+    tokenHash: string;
+    expiresAt: Date;
+    userId: string;
+  }) {
+    return prisma.refreshToken.create({
+      data,
+    });
+  }
+
+  async findRefreshTokenByHash(tokenHash: string) {
+    return prisma.refreshToken.findUnique({
+      where: {
+        tokenHash,
+      },
+    });
+  }
+
+  async deleteRefreshToken(id: string) {
+    return prisma.refreshToken.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async deleteByJti(jti: string) {
+    return prisma.refreshToken.deleteMany({
+      where: {
+        jti,
+      },
+    });
+  }
+
+  async revokeAllRefreshTokens(userId: string) {
+    return prisma.refreshToken.deleteMany({
       where: {
         userId,
       },
     });
-  });
-}
+  }
 
-// password reset
-async savePasswordResetToken(data: {
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-}) {
-  return prisma.passwordResetToken.create({
-    data,
-  });
-}
-
-// find password reset token by hash
-async findPasswordResetTokenByHash(
-  tokenHash: string,
-) {
-  return prisma.passwordResetToken.findUnique({
-    where: {
-      tokenHash,
-    },
-    include: {
-      user: true,
-    },
-  });
-}
-
-// delete password reset token
-async deletePasswordResetToken(
-  id: string,
-) {
-  return prisma.passwordResetToken.delete({
-    where: {
-      id,
-    },
-  });
-}
-
-// delete all password reset token
-async deleteAllPasswordResetTokens(
-  userId: string,
-) {
-  return prisma.passwordResetToken.deleteMany({
-    where: {
-      userId,
-    },
-  });
-}
-
-// prisma transaction for reset password
-async resetPasswordTransaction(data: {
-  userId: string,
-  hashedPassword: string,
-  resetTokenId: string,
-}
-) {
-  return prisma.$transaction(async (tx) => {
-
-    await tx.user.update({
+  async updatePassword(userId: string, password: string) {
+    return prisma.user.update({
       where: {
-        id: data.userId,
+        id: userId,
       },
       data: {
-        password: data.hashedPassword,
+        password,
       },
     });
+  }
 
-    await tx.passwordResetToken.delete({
-      where: {
-        id: data.resetTokenId,
-      },
+  // update password using prisma transaction
+  async updatePasswordAndRevokeSessions(
+    userId: string,
+    hashedPassword: string,
+  ): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          password: hashedPassword,
+        },
+      });
+
+      await tx.refreshToken.deleteMany({
+        where: {
+          userId,
+        },
+      });
     });
+  }
 
-    await tx.refreshToken.deleteMany({
-      where: {
-        userId: data.userId,
-      },
-    });
-
-  });
-}
-
-// delete all old password reset token and add new one
-async replacePasswordResetToken(data: {
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-}) {
-  return prisma.$transaction(async (tx) => {
-
-    await tx.passwordResetToken.deleteMany({
-      where: {
-        userId: data.userId,
-      },
-    });
-
-    return tx.passwordResetToken.create({
+  // password reset
+  async savePasswordResetToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
+    return prisma.passwordResetToken.create({
       data,
     });
+  }
 
-  });
-}
-
-// create email verification token
-async saveEmailVerificationToken(data: {
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-}) {
-  return prisma.emailVerificationToken.create({
-    data,
-  });
-}
-
-// find email verification token
-async findEmailVerificationTokenByHash(
-  tokenHash: string,
-) {
-  return prisma.emailVerificationToken.findUnique({
-    where: {
-      tokenHash,
-    },
-    include: {
-      user: true,
-    },
-  });
-}
-
-// delete email verification token
-async deleteEmailVerificationToken(
-  id: string,
-) {
-  return prisma.emailVerificationToken.delete({
-    where: {
-      id,
-    },
-  });
-}
-
-// delete all email verification token
-async deleteAllEmailVerificationTokens(
-  userId: string,
-) {
-  return prisma.emailVerificationToken.deleteMany({
-    where: {
-      userId,
-    },
-  });
-}
-
-// prisma transaction for replace email verification token - delete all old and add new one
-async replaceEmailVerificationToken(data: {
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-}) {
-  return prisma.$transaction(async (tx) => {
-
-    await tx.emailVerificationToken.deleteMany({
+  // find password reset token by hash
+  async findPasswordResetTokenByHash(tokenHash: string) {
+    return prisma.passwordResetToken.findUnique({
       where: {
-        userId: data.userId,
+        tokenHash,
+      },
+      include: {
+        user: true,
       },
     });
+  }
 
-    return tx.emailVerificationToken.create({
+  // delete password reset token
+  async deletePasswordResetToken(id: string) {
+    return prisma.passwordResetToken.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  // delete all password reset token
+  async deleteAllPasswordResetTokens(userId: string) {
+    return prisma.passwordResetToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  }
+
+  // prisma transaction for reset password
+  async resetPasswordTransaction(data: {
+    userId: string;
+    hashedPassword: string;
+    resetTokenId: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: data.userId,
+        },
+        data: {
+          password: data.hashedPassword,
+        },
+      });
+
+      await tx.passwordResetToken.delete({
+        where: {
+          id: data.resetTokenId,
+        },
+      });
+
+      await tx.refreshToken.deleteMany({
+        where: {
+          userId: data.userId,
+        },
+      });
+    });
+  }
+
+  // delete all old password reset token and add new one
+  async replacePasswordResetToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.deleteMany({
+        where: {
+          userId: data.userId,
+        },
+      });
+
+      return tx.passwordResetToken.create({
+        data,
+      });
+    });
+  }
+
+  // create email verification token
+  async saveEmailVerificationToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
+    return prisma.emailVerificationToken.create({
       data,
     });
+  }
 
-  });
-}
-
-// verify email and delete email verification token
-async markEmailVerifiedTransaction(data: {
-  userId: string;
-  verificationTokenId: string;
-}) {
-  return prisma.$transaction(async (tx) => {
-
-    await tx.user.update({
+  // find email verification token
+  async findEmailVerificationTokenByHash(tokenHash: string) {
+    return prisma.emailVerificationToken.findUnique({
       where: {
-        id: data.userId,
+        tokenHash,
       },
-      data: {
-        isVerified: true,
+      include: {
+        user: true,
       },
     });
+  }
 
-    await tx.emailVerificationToken.delete({
+  // delete email verification token
+  async deleteEmailVerificationToken(id: string) {
+    return prisma.emailVerificationToken.delete({
       where: {
-        id: data.verificationTokenId,
+        id,
       },
     });
+  }
 
-  });
-}
+  // delete all email verification token
+  async deleteAllEmailVerificationTokens(userId: string) {
+    return prisma.emailVerificationToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  }
 
+  // prisma transaction for replace email verification token - delete all old and add new one
+  async replaceEmailVerificationToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      await tx.emailVerificationToken.deleteMany({
+        where: {
+          userId: data.userId,
+        },
+      });
+
+      return tx.emailVerificationToken.create({
+        data,
+      });
+    });
+  }
+
+  // verify email and delete email verification token
+  async markEmailVerifiedTransaction(data: {
+    userId: string;
+    verificationTokenId: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: data.userId,
+        },
+        data: {
+          isVerified: true,
+        },
+      });
+
+      await tx.emailVerificationToken.delete({
+        where: {
+          id: data.verificationTokenId,
+        },
+      });
+    });
+  }
 }

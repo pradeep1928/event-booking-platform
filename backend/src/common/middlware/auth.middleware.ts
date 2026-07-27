@@ -1,8 +1,10 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from "express";
 
-import { jwtService } from '../../infrastructure/jwt/jwt.service.js';
+import { jwtService } from "../../infrastructure/jwt/jwt.service.js";
+import { UnauthorizedException } from "../exceptions/UnauthorizedException.js";
+import { AuthService } from "../../modules/auth/auth.service.js";
 
-import { UnauthorizedException } from '../exceptions/UnauthorizedException.js';
+const authService = new AuthService();
 
 export async function authenticate(
   req: Request,
@@ -11,17 +13,16 @@ export async function authenticate(
 ) {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    return next(
-      new UnauthorizedException('Authentication required'),
-    );
+  if (!authHeader?.startsWith("Bearer ")) {
+    return next(new UnauthorizedException("Authentication required"));
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
-    const payload =
-      await jwtService.verifyAccessToken(token);
+    const payload = await jwtService.verifyAccessToken(token);
+
+    const user = await authService.validateAuthenticatedUser(payload.sub);
 
     req.user = {
       id: payload.sub,
@@ -30,9 +31,7 @@ export async function authenticate(
     };
 
     next();
-  } catch {
-    next(
-      new UnauthorizedException('Invalid or expired token'),
-    );
+  } catch (error){
+    next(error);
   }
 }

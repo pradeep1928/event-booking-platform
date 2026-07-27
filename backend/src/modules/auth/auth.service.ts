@@ -387,4 +387,29 @@ export class AuthService {
       logger.error(error, "Failed to resend verification email");
     }
   }
+
+
+  // Validate authenticated user
+  async validateAuthenticatedUser(
+  userId: string,
+) {
+  const user =
+    await this.repository.findActiveUserById(
+      userId,
+    );
+
+  if (!user) {
+    throw new UnauthorizedException(
+      'User not found',
+    );
+  }
+
+  if (!user.isActive) {
+    throw new ForbiddenException(
+      'Your account has been deactivated',
+    );
+  }
+
+  return user;
+}
 }
