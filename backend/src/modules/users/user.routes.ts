@@ -14,11 +14,22 @@ const router = Router();
 
 const controller = new UserController();
 
+// Get all users
 router.get(
   "/",
   authenticate,
   authorize(Role.ADMIN),
   asyncHandler(controller.getAll),
+);
+
+// Get user by id
+router.get(
+  '/:id',
+  authenticate,
+  authorize(Role.ADMIN),
+  asyncHandler(
+    controller.getById,
+  ),
 );
 
 export default router;

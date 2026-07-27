@@ -3,6 +3,7 @@ import { prisma } from "../../common/prisma/prisma.js";
 import { GetUsersDto } from "./user.validation.js";
 
 export class UserRepository {
+  // Get all users
   async findAll(query: GetUsersDto) {
     const { page, limit, search, role, verified } = query;
 
@@ -69,5 +70,25 @@ export class UserRepository {
       users,
       total,
     };
+  }
+
+  // Get user by id
+    async findById(id: string) {
+    return prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isVerified: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 }

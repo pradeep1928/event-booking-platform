@@ -16,4 +16,9 @@ export const getUsersSchema = z.object({
     .optional(),
 });
 
+export const getUserByIdSchema = z.object({
+  id: z.cuid2(),
+});
+
 export type GetUsersDto = z.infer<typeof getUsersSchema>;
+export type GetUserByIdDto = z.infer<typeof getUserByIdSchema>;
