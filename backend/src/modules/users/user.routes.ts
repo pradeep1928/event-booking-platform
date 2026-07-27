@@ -24,12 +24,17 @@ router.get(
 
 // Get user by id
 router.get(
-  '/:id',
+  "/:id",
   authenticate,
   authorize(Role.ADMIN),
-  asyncHandler(
-    controller.getById,
-  ),
+  asyncHandler(controller.getById),
 );
 
+// update role - user -> org, org -> user
+router.patch(
+  "/:id/role",
+  authenticate,
+  authorize(Role.ADMIN),
+  asyncHandler(controller.updateRole),
+);
 export default router;

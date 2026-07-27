@@ -73,7 +73,7 @@ export class UserRepository {
   }
 
   // Get user by id
-    async findById(id: string) {
+  async findById(id: string) {
     return prisma.user.findUnique({
       where: {
         id,
@@ -88,6 +88,22 @@ export class UserRepository {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+      },
+    });
+  }
+
+  // update role - user -> org, org -> user
+  async updateRole(id: string, role: Role) {
+    return prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        role,
+      },
+      select: {
+        id: true,
+        role: true,
       },
     });
   }
