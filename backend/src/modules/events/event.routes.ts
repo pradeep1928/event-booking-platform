@@ -14,6 +14,7 @@ const router = Router();
 const controller =
   new EventController();
 
+// create new event
 router.post(
   '/',
   authenticate,
@@ -26,4 +27,11 @@ router.post(
   ),
 );
 
+// get all events
+router.get(
+  '/',
+  asyncHandler(
+    controller.findAll,
+  ),
+);
 export default router;

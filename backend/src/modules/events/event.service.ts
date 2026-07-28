@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { EventStatus } from "@prisma/client";
 
 import type { AuthenticatedUser } from "../../common/types/authenticated-user.js";
@@ -11,9 +12,17 @@ import { validateEventDates } from "./rules/event-date.rule.js";
 import { validatePrice } from "./rules/event-price.rule.js";
 import { validateSeats } from "./rules/event-seat.rule.js";
 
+import {
+  buildPagination,
+  buildPaginationMeta,
+} from "../../common/pagination/pagination.util.js";
+
+import type { GetEventsQueryDto } from "./rules/event.query.js";
+
 export class EventService {
   constructor(private readonly repository = new EventRepository()) {}
 
+  // create event
   async create(currentUser: AuthenticatedUser, data: CreateEventDto) {
     ensureOrganizerOrAdmin(currentUser);
 
@@ -51,5 +60,72 @@ export class EventService {
         },
       },
     });
+  }
+
+  // Find all PUBLISHED events
+  async findAll(query: GetEventsQueryDto) {
+    const where: Prisma.EventWhereInput = { status: EventStatus.PUBLISHED};
+
+    if (query.search) {
+      where.OR = [
+        {
+          title: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          description: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          venue: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          city: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
+    if (query.city) {
+      where.city = query.city;
+    }
+
+    if (query.category) {
+      where.category = query.category;
+    }
+
+    if (query.organizerId) {
+      where.organizerId = query.organizerId;
+    }
+
+    const orderBy = {
+      [query.sortBy]: query.sortOrder,
+    };
+
+    const { skip, take } = buildPagination(query.page, query.limit);
+
+    const { items, total } = await this.repository.findAll(
+      where,
+      orderBy,
+      skip,
+      take,
+    );
+
+    return {
+      items,
+      pagination: buildPaginationMeta(query.page, query.limit, total),
+    };
   }
 }
