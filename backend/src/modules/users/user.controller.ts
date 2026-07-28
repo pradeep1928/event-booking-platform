@@ -10,7 +10,6 @@ import {
 } from "./user.validation.js";
 
 import { successResponse } from "../../common/utils/api-response.js";
-import { UnauthorizedException } from "../../common/exceptions/UnauthorizedException.js";
 
 export class UserController {
   constructor(private readonly service = new UserService()) {}

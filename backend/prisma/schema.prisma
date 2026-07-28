@@ -23,6 +23,24 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum EventCategory {
+  MUSIC
+  SPORTS
+  BUSINESS
+  EDUCATION
+  WORKSHOP
+  CONFERENCE
+  FESTIVAL
+  OTHER
+}
+
 model User {
   id          String   @id @default(cuid())
   firstName   String
@@ -45,25 +63,47 @@ model User {
   @@index([email])
 }
 
+
 model Event {
-  id             String   @id @default(cuid())
-  title          String
-  description    String
-  venue          String
-  capacity       Int
-  availableSeats Int
-  eventDate      DateTime
+  id              String @id @default(cuid())
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  title           String
+  description     String?
 
-  createdById    String
-  createdBy      User @relation(fields: [createdById], references: [id])
+  category        EventCategory
 
-  bookings       Booking[]
+  venue           String
 
+  city            String
+  state           String
+  country         String
+
+  eventDate       DateTime
+
+  bookingStart    DateTime
+  bookingEnd      DateTime
+
+  totalSeats      Int
+  availableSeats  Int
+
+  price           Decimal @db.Decimal(10,2)
+
+  status          EventStatus @default(DRAFT)
+
+  organizerId     String
+  organizer       User @relation(fields: [organizerId], references: [id])
+
+  bookings        Booking[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([organizerId])
   @@index([eventDate])
+  @@index([city])
+  @@index([status])
 }
+
 
 model Booking {
   id          String   @id @default(cuid())

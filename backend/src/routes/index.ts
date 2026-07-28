@@ -2,6 +2,7 @@ import { Router } from 'express';
 import healthRoute from './health.route.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import userRoutes from '../modules/users/user.routes.js'
+import eventRoutes from '../modules/events/event.routes.js';
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes)
 
 // Events
-// router.use('/events', eventRoutes);
+router.use('/events', eventRoutes);
 
 // Bookings
 // router.use('/bookings', bookingRoutes);
