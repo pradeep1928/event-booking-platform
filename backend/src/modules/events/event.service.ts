@@ -17,7 +17,10 @@ import {
   buildPaginationMeta,
 } from "../../common/pagination/pagination.util.js";
 
-import type { GetEventsQueryDto } from "./rules/event.query.js";
+import type {
+  OrganizerEventsQueryDto,
+  PublicEventsQueryDto,
+} from "./event.query.js";
 
 export class EventService {
   constructor(private readonly repository = new EventRepository()) {}
@@ -63,8 +66,8 @@ export class EventService {
   }
 
   // Find all PUBLISHED events
-  async findAll(query: GetEventsQueryDto) {
-    const where: Prisma.EventWhereInput = { status: EventStatus.PUBLISHED};
+  async findAll(query: PublicEventsQueryDto) {
+    const where: Prisma.EventWhereInput = { status: EventStatus.PUBLISHED };
 
     if (query.search) {
       where.OR = [
@@ -117,6 +120,76 @@ export class EventService {
     const { skip, take } = buildPagination(query.page, query.limit);
 
     const { items, total } = await this.repository.findAll(
+      where,
+      orderBy,
+      skip,
+      take,
+    );
+
+    return {
+      items,
+      pagination: buildPaginationMeta(query.page, query.limit, total),
+    };
+  }
+
+  // // find by organizer
+  async findMyEvents(
+    currentUser: AuthenticatedUser,
+    query: OrganizerEventsQueryDto,
+  ) {
+    ensureOrganizerOrAdmin(currentUser);
+
+    const where: Prisma.EventWhereInput = {};
+
+    if (query.search) {
+      where.OR = [
+        {
+          title: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          venue: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          city: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
+    if (query.city) {
+      where.city = query.city;
+    }
+
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    if (query.category) {
+      where.category = query.category;
+    }
+
+    const orderBy = {
+      [query.sortBy]: query.sortOrder,
+    };
+
+    const { skip, take } = buildPagination(query.page, query.limit);
+
+    const { items, total } = await this.repository.findByOrganizer(
+      currentUser.id,
       where,
       orderBy,
       skip,

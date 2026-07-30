@@ -45,4 +45,47 @@ export class EventRepository {
       total,
     };
   }
+
+  // find by organizer
+  async findByOrganizer(
+    organizerId: string,
+    where: Prisma.EventWhereInput,
+    orderBy: Prisma.EventOrderByWithRelationInput,
+    skip: number,
+    take: number,
+  ) {
+    const filters: Prisma.EventWhereInput = {
+      ...where,
+      organizerId,
+    };
+
+    const [items, total] = await prisma.$transaction([
+      prisma.event.findMany({
+        where: filters,
+        orderBy,
+        skip,
+        take,
+
+        include: {
+          organizer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      prisma.event.count({
+        where: filters,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+    };
+  }
 }

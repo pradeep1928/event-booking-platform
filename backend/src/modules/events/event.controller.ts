@@ -5,7 +5,10 @@ import { successResponse } from "../../common/utils/api-response.js";
 import { EventService } from "./event.service.js";
 
 import { createEventSchema } from "./event.validation.js";
-import { getEventsQuerySchema } from "./rules/event.query.js";
+import {
+  organizerEventsQuerySchema,
+  publicEventsQuerySchema,
+} from "./event.query.js";
 
 export class EventController {
   constructor(private readonly service = new EventService()) {}
@@ -21,9 +24,18 @@ export class EventController {
 
   // find all events
   findAll = async (req: Request, res: Response) => {
-    const query = getEventsQuerySchema.parse(req.query);
+    const query = publicEventsQuerySchema.parse(req.query);
 
     const result = await this.service.findAll(query);
+
+    successResponse(res, result, "Events fetched successfully");
+  };
+
+  // find by Organizer
+  findMyEvents = async (req: Request, res: Response) => {
+    const query = organizerEventsQuerySchema.parse(req.query);
+
+    const result = await this.service.findMyEvents(req.user!, query);
 
     successResponse(res, result, "Events fetched successfully");
   };
