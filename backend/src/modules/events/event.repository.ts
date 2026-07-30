@@ -88,4 +88,24 @@ export class EventRepository {
       total,
     };
   }
+
+  // Get event by id
+  async findById(id: string) {
+    return prisma.event.findUnique({
+      where: {
+        id,
+      },
+
+      include: {
+        organizer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
 }

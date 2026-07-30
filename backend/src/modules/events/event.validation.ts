@@ -27,4 +27,9 @@ export const createEventSchema = z.object({
   price: z.number().min(0),
 });
 
+export const eventIdParamSchema = z.object({
+  id: z.cuid2(),
+});
+
+export type EventIdParamDto = z.infer<typeof eventIdParamSchema>;
 export type CreateEventDto = z.infer<typeof createEventSchema>;

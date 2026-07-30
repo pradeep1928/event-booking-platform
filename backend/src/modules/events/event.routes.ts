@@ -32,4 +32,9 @@ router.get(
   asyncHandler(controller.findMyEvents),
 );
 
+// get event by id for all
+router.get("/:id", 
+  asyncHandler(controller.findById));
+
+
 export default router;

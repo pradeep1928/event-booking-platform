@@ -21,6 +21,7 @@ import type {
   OrganizerEventsQueryDto,
   PublicEventsQueryDto,
 } from "./event.query.js";
+import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 
 export class EventService {
   constructor(private readonly repository = new EventRepository()) {}
@@ -200,5 +201,20 @@ export class EventService {
       items,
       pagination: buildPaginationMeta(query.page, query.limit, total),
     };
+  }
+
+  // Fing event by id
+  async findPublicById(id: string) {
+    const event = await this.repository.findById(id);
+
+    if (!event) {
+      throw new NotFoundException("Event not found");
+    }
+
+    if (event.status !== EventStatus.PUBLISHED) {
+      throw new NotFoundException("Event not found");
+    }
+
+    return event;
   }
 }

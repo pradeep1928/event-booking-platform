@@ -4,7 +4,7 @@ import { successResponse } from "../../common/utils/api-response.js";
 
 import { EventService } from "./event.service.js";
 
-import { createEventSchema } from "./event.validation.js";
+import { createEventSchema, eventIdParamSchema } from "./event.validation.js";
 import {
   organizerEventsQuerySchema,
   publicEventsQuerySchema,
@@ -38,5 +38,14 @@ export class EventController {
     const result = await this.service.findMyEvents(req.user!, query);
 
     successResponse(res, result, "Events fetched successfully");
+  };
+
+  // find event by id
+  findById = async (req: Request, res: Response) => {
+    const { id } = eventIdParamSchema.parse(req.params);
+
+    const event = await this.service.findPublicById(id);
+
+    successResponse(res, event, "Event fetched successfully");
   };
 }
