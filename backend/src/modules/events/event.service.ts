@@ -5,12 +5,12 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.js
 
 import { EventRepository } from "./event.repository.js";
 
-import type { CreateEventDto } from "./event.validation.js";
+import type { CreateEventDto, UpdateEventBodyDto } from "./event.validation.js";
 
 import { ensureOrganizerOrAdmin } from "./rules/event-permission.rule.js";
 import { validateEventDates } from "./rules/event-date.rule.js";
-import { validatePrice } from "./rules/event-price.rule.js";
-import { validateSeats } from "./rules/event-seat.rule.js";
+import { validateEventPrice } from "./rules/event-price.rule.js";
+import { validateEventSeats } from "./rules/event-seat.rule.js";
 
 import {
   buildPagination,
@@ -21,7 +21,13 @@ import type {
   OrganizerEventsQueryDto,
   PublicEventsQueryDto,
 } from "./event.query.js";
+
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
+import {
+  ensureEventEditable,
+  ensureEventExists,
+  ensureEventOwner,
+} from "./rules/event-access.rule.js";
 
 export class EventService {
   constructor(private readonly repository = new EventRepository()) {}
@@ -32,9 +38,9 @@ export class EventService {
 
     validateEventDates(data);
 
-    validateSeats(data.totalSeats);
+    validateEventSeats(data.totalSeats);
 
-    validatePrice(data.price);
+    validateEventPrice(data.price);
 
     return this.repository.create({
       title: data.title,
@@ -216,5 +222,33 @@ export class EventService {
     }
 
     return event;
+  }
+
+  // update event only admin (all) or organizer (own events)
+  async update(
+    currentUser: AuthenticatedUser,
+    eventId: string,
+    body: UpdateEventBodyDto,
+  ) {
+    const event = await this.repository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    ensureEventEditable(event);
+
+    const updatedEvent = {
+      ...event,
+      ...body,
+    };
+
+    validateEventDates(updatedEvent);
+
+    validateEventPrice(updatedEvent);
+
+    validateEventSeats(updatedEvent);
+
+    return this.repository.update(eventId, body);
   }
 }

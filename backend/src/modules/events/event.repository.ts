@@ -108,4 +108,14 @@ export class EventRepository {
       },
     });
   }
+
+  // update event
+  async update(id: string, data: Prisma.EventUpdateInput) {
+    return prisma.event.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  }
 }

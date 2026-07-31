@@ -1,8 +1,9 @@
 import { BadRequestException } from "../../../common/exceptions/BadRequestException.js";
+import { EventDateValidation } from "../event-validation.types.js";
 
 import type { CreateEventDto } from "../event.validation.js";
 
-export function validateEventDates(data: CreateEventDto): void {
+export function validateEventDates(data: EventDateValidation): void {
   const now = new Date();
 
   if (data.eventDate <= now) {

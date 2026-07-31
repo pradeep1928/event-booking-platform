@@ -1,6 +1,6 @@
 import { BadRequestException } from '../../../common/exceptions/BadRequestException.js';
 
-export function validateSeats(
+export function validateEventSeats(
   totalSeats: number,
 ): void {
 

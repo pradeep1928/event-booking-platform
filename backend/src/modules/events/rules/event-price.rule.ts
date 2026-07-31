@@ -1,10 +1,11 @@
+import { Decimal } from '@prisma/client/runtime/library';
 import { BadRequestException } from '../../../common/exceptions/BadRequestException.js';
 
-export function validatePrice(
-  price: number,
+export function validateEventPrice(
+  price: number | Decimal,
 ): void {
 
-  if (price < 0) {
+  if (Number(price) < 0) {
     throw new BadRequestException(
       'Price cannot be negative',
     );

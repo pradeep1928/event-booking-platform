@@ -31,5 +31,12 @@ export const eventIdParamSchema = z.object({
   id: z.cuid2(),
 });
 
+export const updateEventBodySchema = createEventSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
+
+export type UpdateEventBodyDto = z.infer<typeof updateEventBodySchema>;
 export type EventIdParamDto = z.infer<typeof eventIdParamSchema>;
 export type CreateEventDto = z.infer<typeof createEventSchema>;
