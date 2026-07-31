@@ -5,12 +5,12 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.js
 
 import { EventRepository } from "./event.repository.js";
 
-import type { CreateEventDto, UpdateEventBodyDto } from "./event.validation.js";
+import type { CreateEventDto, UpdateEventBodyDto, eventIdParamSchema } from "./event.validation.js";
 
 import { ensureOrganizerOrAdmin } from "./rules/event-permission.rule.js";
 import { validateEventDates } from "./rules/event-date.rule.js";
 import { validateEventPrice } from "./rules/event-price.rule.js";
-import { validateEventSeats } from "./rules/event-seat.rule.js";
+import { calculateAvailableSeats, validateNewEventSeats, validateUpdatedEventSeats } from "./rules/event-seat.rule.js";
 
 import {
   buildPagination,
@@ -38,7 +38,7 @@ export class EventService {
 
     validateEventDates(data);
 
-    validateEventSeats(data.totalSeats);
+    validateNewEventSeats(data.totalSeats);
 
     validateEventPrice(data.price);
 
@@ -209,7 +209,7 @@ export class EventService {
     };
   }
 
-  // Fing event by id
+  // Find event by id
   async findPublicById(id: string) {
     const event = await this.repository.findById(id);
 
@@ -245,10 +245,17 @@ export class EventService {
 
     validateEventDates(updatedEvent);
 
-    validateEventPrice(updatedEvent);
+    validateEventPrice(updatedEvent.price);
 
-    validateEventSeats(updatedEvent);
+    const updateData: Prisma.EventUpdateInput = {
+      ...body
+    }
 
-    return this.repository.update(eventId, body);
+    if (body.totalSeats !== undefined) {
+    validateUpdatedEventSeats(event, updatedEvent.totalSeats);
+    updateData.availableSeats = calculateAvailableSeats(event, body.totalSeats)
+    }
+
+    return this.repository.update(eventId, updateData);
   }
 }

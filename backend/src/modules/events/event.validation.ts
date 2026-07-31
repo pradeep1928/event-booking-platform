@@ -6,7 +6,7 @@ export const createEventSchema = z.object({
 
   description: z.string().trim().max(2000).optional(),
 
-  category: z.nativeEnum(EventCategory),
+  category: z.enum(EventCategory),
 
   venue: z.string().trim().min(3).max(200),
 
@@ -31,11 +31,40 @@ export const eventIdParamSchema = z.object({
   id: z.cuid2(),
 });
 
-export const updateEventBodySchema = createEventSchema
-  .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field is required",
-  });
+export const updateEventBodySchema = z
+  .object({
+    title: z.string().trim().min(3).max(200).optional(),
+
+    description: z.string().trim().optional(),
+
+    category: z.enum(EventCategory).optional(),
+
+    venue: z.string().trim().optional(),
+
+    city: z.string().trim().optional(),
+
+    state: z.string().trim().optional(),
+
+    country: z.string().trim().optional(),
+
+    eventDate: z.coerce.date().optional(),
+
+    bookingStart: z.coerce.date().optional(),
+
+    bookingEnd: z.coerce.date().optional(),
+
+    totalSeats: z.number().int().positive().optional(),
+
+    price: z.number().nonnegative().optional(),
+
+    bannerImage: z.url().optional(),
+  })
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    {
+      message: "At least one field is required",
+    },
+  );
 
 export type UpdateEventBodyDto = z.infer<typeof updateEventBodySchema>;
 export type EventIdParamDto = z.infer<typeof eventIdParamSchema>;
