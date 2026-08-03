@@ -4,7 +4,11 @@ import { successResponse } from "../../common/utils/api-response.js";
 
 import { EventService } from "./event.service.js";
 
-import { createEventSchema, eventIdParamSchema, updateEventBodySchema } from "./event.validation.js";
+import {
+  createEventSchema,
+  eventIdParamSchema,
+  updateEventBodySchema,
+} from "./event.validation.js";
 import {
   organizerEventsQuerySchema,
   publicEventsQuerySchema,
@@ -58,5 +62,14 @@ export class EventController {
     const event = await this.service.update(req.user!, id, body);
 
     successResponse(res, event, "Event updated successfully");
+  };
+
+  // publish event only admin (all) or organizer (own events)
+  publish = async (req: Request, res: Response) => {
+    const { id } = eventIdParamSchema.parse(req.params);
+
+    const event = await this.service.publish(req.user!, id);
+
+    successResponse(res, event, "Event published successfully");
   };
 }

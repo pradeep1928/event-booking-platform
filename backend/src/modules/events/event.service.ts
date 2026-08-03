@@ -5,12 +5,20 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.js
 
 import { EventRepository } from "./event.repository.js";
 
-import type { CreateEventDto, UpdateEventBodyDto, eventIdParamSchema } from "./event.validation.js";
+import type {
+  CreateEventDto,
+  UpdateEventBodyDto,
+  eventIdParamSchema,
+} from "./event.validation.js";
 
 import { ensureOrganizerOrAdmin } from "./rules/event-permission.rule.js";
 import { validateEventDates } from "./rules/event-date.rule.js";
 import { validateEventPrice } from "./rules/event-price.rule.js";
-import { calculateAvailableSeats, validateNewEventSeats, validateUpdatedEventSeats } from "./rules/event-seat.rule.js";
+import {
+  calculateAvailableSeats,
+  validateNewEventSeats,
+  validateUpdatedEventSeats,
+} from "./rules/event-seat.rule.js";
 
 import {
   buildPagination,
@@ -27,6 +35,7 @@ import {
   ensureEventEditable,
   ensureEventExists,
   ensureEventOwner,
+  ensurePublishable,
 } from "./rules/event-access.rule.js";
 
 export class EventService {
@@ -248,14 +257,36 @@ export class EventService {
     validateEventPrice(updatedEvent.price);
 
     const updateData: Prisma.EventUpdateInput = {
-      ...body
-    }
+      ...body,
+    };
 
     if (body.totalSeats !== undefined) {
-    validateUpdatedEventSeats(event, updatedEvent.totalSeats);
-    updateData.availableSeats = calculateAvailableSeats(event, body.totalSeats)
+      validateUpdatedEventSeats(event, updatedEvent.totalSeats);
+      updateData.availableSeats = calculateAvailableSeats(
+        event,
+        body.totalSeats,
+      );
     }
 
     return this.repository.update(eventId, updateData);
+  }
+
+  // publish event only admin (all) or organizer (own events)
+  async publish(currentUser: AuthenticatedUser, eventId: string) {
+    const event = await this.repository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    ensurePublishable(event);
+
+    validateEventDates(event);
+
+    validateEventPrice(event.price);
+
+    validateNewEventSeats(event.totalSeats);
+
+    return this.repository.publish(eventId);
   }
 }

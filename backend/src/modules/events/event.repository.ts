@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { EventStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../common/prisma/prisma.js";
 
 export class EventRepository {
@@ -116,6 +116,16 @@ export class EventRepository {
         id,
       },
       data,
+    });
+  }
+
+  // publish event
+  async publish(id: string) {
+    return prisma.event.update({
+      where: { id },
+      data: {
+        status: EventStatus.PUBLISHED,
+      },
     });
   }
 }

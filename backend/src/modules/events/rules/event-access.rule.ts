@@ -4,6 +4,7 @@ import { NotFoundException } from "../../../common/exceptions/NotFoundException.
 import { ForbiddenException } from "../../../common/exceptions/ForbiddenException.js";
 
 import type { AuthenticatedUser } from "../../../common/types/authenticated-user.js";
+import { BadRequestException } from "../../../common/exceptions/BadRequestException.js";
 
 export function ensureEventExists(event: Event | null): asserts event is Event {
   if (!event) {
@@ -36,5 +37,19 @@ export function ensureEventEditable(event: Event): void {
     event.status === EventStatus.COMPLETED
   ) {
     throw new ForbiddenException("This event cannot be updated");
+  }
+}
+
+export function ensurePublishable(event: Event): void {
+  if (event.status === EventStatus.PUBLISHED) {
+    throw new BadRequestException("Event is already published");
+  }
+
+  if (event.status === EventStatus.CANCELLED) {
+    throw new BadRequestException("Cancelled events cannot be published");
+  }
+
+  if (event.status === EventStatus.COMPLETED) {
+    throw new BadRequestException("Completed events cannot be published");
   }
 }

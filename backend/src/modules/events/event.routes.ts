@@ -33,14 +33,29 @@ router.get(
 );
 
 // get event by id for all
-router.get("/:id", asyncHandler(controller.findById));
+router.get("/:event-id", asyncHandler(controller.findById));
 
 // update event only admin (all) or organizer (own events)
+// id is event id
 router.patch(
-  "/:id",
+  "/:id/update",
   authenticate,
   authorize(Role.ADMIN, Role.ORGANIZER),
   asyncHandler(controller.update),
+);
+
+// publish event only admin (all) or organizer (own events) 
+// id is event id
+router.patch(
+  "/:id/publish",
+  authenticate,
+  authorize(
+    Role.ADMIN,
+    Role.ORGANIZER,
+  ),
+  asyncHandler(
+    controller.publish,
+  ),
 );
 
 export default router;
