@@ -128,4 +128,24 @@ export class EventRepository {
       },
     });
   }
+
+  // cancel event
+  async cancel(id: string) {
+    return prisma.event.update({
+      where: {
+        id,
+      },
+      data: {
+        status: EventStatus.CANCELLED,
+      },
+    });
+  }
+
+  // update status of event
+  async updateStatus(id: string, status: EventStatus) {
+    return prisma.event.update({
+      where: { id },
+      data: { status },
+    });
+  }
 }

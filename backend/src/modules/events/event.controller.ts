@@ -72,4 +72,13 @@ export class EventController {
 
     successResponse(res, event, "Event published successfully");
   };
+
+  // cancel event only admin (all) or organizer (own events)
+  cancel = async (req: Request, res: Response) => {
+    const { id } = eventIdParamSchema.parse(req.params);
+
+    const event = await this.service.cancel(req.user!, id);
+
+    successResponse(res, event, "Event cancelled successfully");
+  };
 }

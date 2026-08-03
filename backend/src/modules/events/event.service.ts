@@ -32,6 +32,7 @@ import type {
 
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import {
+  ensureCancelable,
   ensureEventEditable,
   ensureEventExists,
   ensureEventOwner,
@@ -288,5 +289,18 @@ export class EventService {
     validateNewEventSeats(event.totalSeats);
 
     return this.repository.publish(eventId);
+  }
+
+  // cancel event only admin (all) or organizer (own events)
+  async cancel(currentUser: AuthenticatedUser, eventId: string) {
+    const event = await this.repository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    ensureCancelable(event);
+
+    return this.repository.cancel(eventId);
   }
 }

@@ -53,3 +53,13 @@ export function ensurePublishable(event: Event): void {
     throw new BadRequestException("Completed events cannot be published");
   }
 }
+
+export function ensureCancelable(event: Event): void {
+  if (event.status === EventStatus.CANCELLED) {
+    throw new BadRequestException("Event is already cancelled");
+  }
+
+  if (event.status === EventStatus.COMPLETED) {
+    throw new BadRequestException("Completed events cannot be cancelled");
+  }
+}

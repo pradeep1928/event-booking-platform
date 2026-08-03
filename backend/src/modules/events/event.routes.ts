@@ -58,4 +58,18 @@ router.patch(
   ),
 );
 
+// cancel event only admin (all) or organizer (own events)
+// id is event id
+router.patch(
+  "/:id/cancel",
+  authenticate,
+  authorize(
+    Role.ADMIN,
+    Role.ORGANIZER,
+  ),
+  asyncHandler(
+    controller.cancel,
+  ),
+);
+
 export default router;
