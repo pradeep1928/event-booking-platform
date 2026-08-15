@@ -2,6 +2,7 @@
 import { Event, Booking} from "@prisma/client";
 
 import { BadRequestException } from "../../../common/exceptions/BadRequestException.js";
+import { ConflictException } from "../../../common/exceptions/ConflictException.js";
 
 export function ensureSeatsAvailable(
   event: Event,
@@ -21,7 +22,7 @@ export function ensureNotAlreadyBooked(
   booking: Booking | null,
 ): void {
   if (booking) {
-    throw new BadRequestException(
+    throw new ConflictException(
       "You have already booked this event",
     );
   }

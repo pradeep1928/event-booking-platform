@@ -2,7 +2,10 @@ import type { AuthenticatedUser } from "../../common/types/authenticated-user.js
 
 import { BookingRepository } from "./booking.repository.js";
 
-import { CreateBookingBodyDto } from "./booking.validation.js";
+import {
+  CreateBookingBodyDto,
+  GetMyBookingsQueryDto,
+} from "./booking.validation.js";
 
 import { ensureBookingOpen } from "./rules/booking-date.rule.js";
 
@@ -19,6 +22,10 @@ import { ensureEventExists } from "../events/rules/event-access.rule.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { ForbiddenException } from "../../common/exceptions/ForbiddenException.js";
 import { Role } from "@prisma/client";
+import {
+  buildPagination,
+  buildPaginationMeta,
+} from "../../common/pagination/pagination.util.js";
 
 export class BookingService {
   constructor(
@@ -66,6 +73,7 @@ export class BookingService {
     );
   }
 
+  // get booking by id (booking id)
   async findById(currentUser: AuthenticatedUser, bookingId: string) {
     const booking = await this.repository.findById(bookingId);
 
@@ -80,5 +88,25 @@ export class BookingService {
     }
 
     return booking;
+  }
+
+  // get own bookings by userid
+  async findMyBookings(
+    currentUser: AuthenticatedUser,
+    query: GetMyBookingsQueryDto,
+  ) {
+    const { skip, take } = buildPagination(query.page, query.limit);
+
+    const { items, total } = await this.repository.findByUser(
+      currentUser.id,
+      skip,
+      take,
+    );
+
+    return {
+      items,
+
+      pagination: buildPaginationMeta(query.page, query.limit, total),
+    };
   }
 }
