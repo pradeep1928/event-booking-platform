@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../common/prisma/prisma.js";
 import { BadRequestException } from "../../common/exceptions/BadRequestException.js";
+import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 
 export class BookingRepository {
   async findById(id: string) {
@@ -104,5 +105,57 @@ export class BookingRepository {
       items,
       total,
     };
+  }
+
+// cancel own booking
+  async cancel(bookingId: string) {
+    return prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        include: {
+          event: true,
+        },
+      });
+
+      if (!booking) {
+        throw new NotFoundException("Booking not found");
+      }
+
+      const updatedBooking = await tx.booking.updateMany({
+        where: {
+          id: bookingId,
+          status: BookingStatus.CONFIRMED,
+        },
+        data: {
+          status: BookingStatus.CANCELLED,
+        },
+      });
+
+      if (updatedBooking.count === 0) {
+        throw new BadRequestException("Booking is already cancelled");
+      }
+
+      await tx.event.update({
+        where: {
+          id: booking.eventId,
+        },
+        data: {
+          availableSeats: {
+            increment: booking.ticketCount,
+          },
+        },
+      });
+
+      return tx.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        include: {
+          event: true,
+        },
+      });
+    });
   }
 }

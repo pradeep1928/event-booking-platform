@@ -10,10 +10,16 @@ const router = Router();
 
 const controller = new BookingController();
 
+// create bookings
 router.post("/", authenticate, asyncHandler(controller.create));
 
+// get own booking by userid
 router.get("/", authenticate, asyncHandler(controller.findMyBookings));
 
+// Get booking by id (booking id)
 router.get("/:id", authenticate, asyncHandler(controller.findById));
+
+// cancel own booking
+router.patch("/:id/cancel", authenticate, asyncHandler(controller.cancel));
 
 export default router;

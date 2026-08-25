@@ -7,14 +7,20 @@ import {
   GetMyBookingsQueryDto,
 } from "./booking.validation.js";
 
-import { ensureBookingOpen } from "./rules/booking-date.rule.js";
+import {
+  ensureBookingOpen,
+  ensureEventNotStarted,
+} from "./rules/booking-date.rule.js";
 
 import {
   ensureSeatsAvailable,
   ensureNotAlreadyBooked,
 } from "./rules/booking-seat.rule.js";
 
-import { ensureEventBookable } from "./rules/booking-status.rule.js";
+import {
+  ensureBookingConfirmed,
+  ensureEventBookable,
+} from "./rules/booking-status.rule.js";
 
 import { EventRepository } from "../events/event.repository.js";
 
@@ -30,7 +36,6 @@ import {
 export class BookingService {
   constructor(
     private readonly repository = new BookingRepository(),
-
     private readonly eventRepository = new EventRepository(),
   ) {}
 
@@ -105,8 +110,28 @@ export class BookingService {
 
     return {
       items,
-
       pagination: buildPaginationMeta(query.page, query.limit, total),
     };
+  }
+
+// cancel own booking
+  async cancel(currentUser: AuthenticatedUser, bookingId: string) {
+    const booking = await this.repository.findById(bookingId);
+
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    if (booking.userId !== currentUser.id) {
+      throw new ForbiddenException(
+        "You are not allowed to cancel this booking",
+      );
+    }
+
+    ensureBookingConfirmed(booking);
+
+    ensureEventNotStarted(booking.event);
+
+    return this.repository.cancel(bookingId);
   }
 }

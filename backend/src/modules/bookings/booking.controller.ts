@@ -38,4 +38,13 @@ export class BookingController {
 
     successResponse(res, result, "Bookings retrieved successfully");
   };
+
+// cancel own booking
+  cancel = async (req: Request, res: Response) => {
+    const { id } = bookingIdParamSchema.parse(req.params);
+
+    const booking = await this.service.cancel(req.user!, id);
+
+    successResponse(res, booking, "Booking cancelled successfully");
+  };
 }

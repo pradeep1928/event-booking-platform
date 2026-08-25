@@ -20,3 +20,15 @@ export function ensureBookingOpen(
     );
   }
 }
+
+export function ensureEventNotStarted(
+  event: Event,
+): void {
+  const now = new Date();
+
+  if (now >= event.eventDate) {
+    throw new BadRequestException(
+      "Booking cannot be cancelled after the event has started",
+    );
+  }
+}
