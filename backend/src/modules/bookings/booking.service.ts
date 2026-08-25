@@ -14,7 +14,7 @@ import {
 
 import {
   ensureSeatsAvailable,
-  ensureNotAlreadyBooked,
+  ensureCanBook,
 } from "./rules/booking-seat.rule.js";
 
 import {
@@ -27,7 +27,7 @@ import { EventRepository } from "../events/event.repository.js";
 import { ensureEventExists } from "../events/rules/event-access.rule.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { ForbiddenException } from "../../common/exceptions/ForbiddenException.js";
-import { Role } from "@prisma/client";
+import { BookingStatus, Role } from "@prisma/client";
 import {
   buildPagination,
   buildPaginationMeta,
@@ -55,7 +55,15 @@ export class BookingService {
       body.eventId,
     );
 
-    ensureNotAlreadyBooked(existingBooking);
+    ensureCanBook(existingBooking);
+
+    if (existingBooking?.status === BookingStatus.CANCELLED) {
+      return this.repository.rebook(
+        existingBooking.id,
+        body.ticketCount,
+        body.eventId,
+      );
+    }
 
     return this.repository.create(
       {
@@ -114,7 +122,7 @@ export class BookingService {
     };
   }
 
-// cancel own booking
+  // cancel own booking
   async cancel(currentUser: AuthenticatedUser, bookingId: string) {
     const booking = await this.repository.findById(bookingId);
 

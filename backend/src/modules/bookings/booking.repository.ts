@@ -2,6 +2,7 @@ import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../common/prisma/prisma.js";
 import { BadRequestException } from "../../common/exceptions/BadRequestException.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
+import { ConflictException } from "../../common/exceptions/ConflictException.js";
 
 export class BookingRepository {
   async findById(id: string) {
@@ -107,7 +108,7 @@ export class BookingRepository {
     };
   }
 
-// cancel own booking
+  // cancel own booking
   async cancel(bookingId: string) {
     return prisma.$transaction(async (tx) => {
       const booking = await tx.booking.findUnique({
@@ -147,6 +148,55 @@ export class BookingRepository {
           },
         },
       });
+
+      return tx.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        include: {
+          event: true,
+        },
+      });
+    });
+  }
+
+  // rebook cancel booking
+  async rebook(bookingId: string, ticketCount: number, eventId: string) {
+    return prisma.$transaction(async (tx) => {
+      const updatedEvent = await tx.event.updateMany({
+        where: {
+          id: eventId,
+          availableSeats: {
+            gte: ticketCount,
+          },
+        },
+        data: {
+          availableSeats: {
+            decrement: ticketCount,
+          },
+        },
+      });
+
+      if (updatedEvent.count === 0) {
+        throw new BadRequestException("Not enough seats available");
+      }
+
+      const updatedBooking = await tx.booking.updateMany({
+        where: {
+          id: bookingId,
+          status: BookingStatus.CANCELLED,
+        },
+        data: {
+          status: BookingStatus.CONFIRMED,
+          ticketCount,
+        },
+      });
+
+      if (updatedBooking.count === 0) {
+        throw new ConflictException(
+          "Booking is no longer available for rebooking",
+        );
+      }
 
       return tx.booking.findUnique({
         where: {
