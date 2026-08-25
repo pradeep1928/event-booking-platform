@@ -18,5 +18,5 @@ npx prisma migrate dev --name add_password_reset_token
 
 npx prisma generate
 
-// prisma ui studio
+<!-- prisma ui studio -->
 npx prisma studio

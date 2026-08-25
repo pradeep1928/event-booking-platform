@@ -32,10 +32,10 @@ router.get(
   asyncHandler(controller.findMyEvents),
 );
 
-// get event by id for all
-router.get("/:event-id", asyncHandler(controller.findById));
+// get event by id -- for all 
+router.get("/:id", asyncHandler(controller.findById));
 
-// update event only admin (all) or organizer (own events)
+// update event only admin (all events) or organizer (own events)
 // id is event id
 router.patch(
   "/:id/update",
