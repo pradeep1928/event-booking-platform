@@ -208,4 +208,44 @@ export class BookingRepository {
       });
     });
   }
+
+  // Get all bookings of event (for organizer and admin)
+  async findByEvent(eventId: string, skip: number, take: number) {
+    const filters: Prisma.BookingWhereInput = {
+      eventId,
+    };
+
+    const [items, total] = await prisma.$transaction([
+      prisma.booking.findMany({
+        where: filters,
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        skip,
+        take,
+
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      prisma.booking.count({
+        where: filters,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+    };
+  }
 }

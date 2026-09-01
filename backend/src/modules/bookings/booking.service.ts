@@ -4,6 +4,7 @@ import { BookingRepository } from "./booking.repository.js";
 
 import {
   CreateBookingBodyDto,
+  GetEventBookingsQueryDto,
   GetMyBookingsQueryDto,
 } from "./booking.validation.js";
 
@@ -24,7 +25,7 @@ import {
 
 import { EventRepository } from "../events/event.repository.js";
 
-import { ensureEventExists } from "../events/rules/event-access.rule.js";
+import { ensureEventExists, ensureEventOwner } from "../events/rules/event-access.rule.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { ForbiddenException } from "../../common/exceptions/ForbiddenException.js";
 import { BookingStatus, Role } from "@prisma/client";
@@ -141,5 +142,31 @@ export class BookingService {
     ensureEventNotStarted(booking.event);
 
     return this.repository.cancel(bookingId);
+  }
+
+  // Get all bookings of event (for organizer and admin)
+  async findByEvent(
+    currentUser: AuthenticatedUser,
+    eventId: string,
+    query: GetEventBookingsQueryDto,
+  ) {
+    const event = await this.eventRepository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    const { skip, take } = buildPagination(query.page, query.limit);
+
+    const { items, total } = await this.repository.findByEvent(
+      eventId,
+      skip,
+      take,
+    );
+
+    return {
+      items,
+      pagination: buildPaginationMeta(query.page, query.limit, total),
+    };
   }
 }

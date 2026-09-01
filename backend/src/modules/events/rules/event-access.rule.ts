@@ -31,6 +31,28 @@ export function ensureEventOwner(
   }
 }
 
+// export function ensureEventOwner(
+//   currentUser: AuthenticatedUser,
+//   event: Event,
+// ): void {
+//   if (
+//     currentUser.role === Role.ADMIN
+//   ) {
+//     return;
+//   }
+
+//   if (
+//     currentUser.role === Role.ORGANIZER &&
+//     currentUser.id === event.organizerId
+//   ) {
+//     return;
+//   }
+
+//   throw new ForbiddenException(
+//     "You are not allowed to access this event",
+//   );
+// }
+
 export function ensureEventEditable(event: Event): void {
   if (
     event.status === EventStatus.CANCELLED ||

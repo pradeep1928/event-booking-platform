@@ -6,6 +6,8 @@ import {
   createBookingBodySchema,
   bookingIdParamSchema,
   getMyBookingsQuerySchema,
+  eventBookingsParamSchema,
+  getEventBookingsQuerySchema,
 } from "./booking.validation.js";
 import { successResponse } from "../../common/utils/api-response.js";
 
@@ -39,12 +41,23 @@ export class BookingController {
     successResponse(res, result, "Bookings retrieved successfully");
   };
 
-// cancel own booking
+  // cancel own booking
   cancel = async (req: Request, res: Response) => {
     const { id } = bookingIdParamSchema.parse(req.params);
 
     const booking = await this.service.cancel(req.user!, id);
 
     successResponse(res, booking, "Booking cancelled successfully");
+  };
+
+  // Get all bookings of event (for organizer and admin)
+  findByEvent = async (req: Request, res: Response) => {
+    const { eventId } = eventBookingsParamSchema.parse(req.params);
+
+    const query = getEventBookingsQuerySchema.parse(req.query);
+
+    const result = await this.service.findByEvent(req.user!, eventId, query);
+
+    successResponse(res, result, "Event bookings retrieved successfully");
   };
 }

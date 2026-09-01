@@ -20,3 +20,10 @@ npx prisma generate
 
 <!-- prisma ui studio -->
 npx prisma studio
+
+
+
+postgres command 
+ \d  => list of tables
+ \d <table name> check table schema
+ \c <database name> => connect to database 
