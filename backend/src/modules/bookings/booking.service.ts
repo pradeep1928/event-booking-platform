@@ -160,6 +160,7 @@ export class BookingService {
 
     const { items, total } = await this.repository.findByEvent(
       eventId,
+      query.status,
       skip,
       take,
     );

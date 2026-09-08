@@ -210,9 +210,10 @@ export class BookingRepository {
   }
 
   // Get all bookings of event (for organizer and admin)
-  async findByEvent(eventId: string, skip: number, take: number) {
+  async findByEvent(eventId: string, status: BookingStatus | undefined, skip: number, take: number) {
     const filters: Prisma.BookingWhereInput = {
       eventId,
+      ...(status && { status })
     };
 
     const [items, total] = await prisma.$transaction([

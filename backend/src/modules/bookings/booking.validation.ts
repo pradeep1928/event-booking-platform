@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BookingStatus } from "@prisma/client";
 
 export const createBookingBodySchema = z.object({
   eventId: z.cuid2(),
@@ -21,6 +22,7 @@ export const eventBookingsParamSchema = z.object({
 export const getEventBookingsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  status: z.enum([BookingStatus.CONFIRMED, BookingStatus.CANCELLED]).optional()
 });
 
 export type EventBookingsParamDto = z.infer<typeof eventBookingsParamSchema>;
