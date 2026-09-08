@@ -18,6 +18,14 @@ router.post("/", authenticate, asyncHandler(controller.create));
 // get own booking by userid
 router.get("/", authenticate, asyncHandler(controller.findMyBookings));
 
+// get booking statistics for an event (for organizer and admin)
+router.get(
+  "/event/:eventId/stats",
+  authenticate,
+  authorize(Role.ADMIN, Role.ORGANIZER),
+  asyncHandler(controller.getEventStats),
+);
+
 // Get all bookings of event (for organizer and admin)
 router.get(
   "/event/:eventId",

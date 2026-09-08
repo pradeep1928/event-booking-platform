@@ -210,10 +210,15 @@ export class BookingRepository {
   }
 
   // Get all bookings of event (for organizer and admin)
-  async findByEvent(eventId: string, status: BookingStatus | undefined, skip: number, take: number) {
+  async findByEvent(
+    eventId: string,
+    status: BookingStatus | undefined,
+    skip: number,
+    take: number,
+  ) {
     const filters: Prisma.BookingWhereInput = {
       eventId,
-      ...(status && { status })
+      ...(status && { status }),
     };
 
     const [items, total] = await prisma.$transaction([
@@ -247,6 +252,65 @@ export class BookingRepository {
     return {
       items,
       total,
+    };
+  }
+
+  // get booking statistics for an event (for organizer and admin)
+  async getEventStats(eventId: string) {
+    const [
+      totalBookings,
+      confirmedBookings,
+      cancelledBookings,
+      confirmedTickets,
+      cancelledTickets,
+    ] = await prisma.$transaction([
+      prisma.booking.count({
+        where: {
+          eventId,
+        },
+      }),
+
+      prisma.booking.count({
+        where: {
+          eventId,
+          status: BookingStatus.CONFIRMED,
+        },
+      }),
+
+      prisma.booking.count({
+        where: {
+          eventId,
+          status: BookingStatus.CANCELLED,
+        },
+      }),
+
+      prisma.booking.aggregate({
+        where: {
+          eventId,
+          status: BookingStatus.CONFIRMED,
+        },
+        _sum: {
+          ticketCount: true,
+        },
+      }),
+
+      prisma.booking.aggregate({
+        where: {
+          eventId,
+          status: BookingStatus.CANCELLED,
+        },
+        _sum: {
+          ticketCount: true,
+        },
+      }),
+    ]);
+
+    return {
+      totalBookings,
+      confirmedBookings,
+      cancelledBookings,
+      confirmedTickets: confirmedTickets._sum.ticketCount ?? 0,
+      cancelledTickets: cancelledTickets._sum.ticketCount ?? 0,
     };
   }
 }

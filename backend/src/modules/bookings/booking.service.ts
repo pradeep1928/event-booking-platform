@@ -25,7 +25,10 @@ import {
 
 import { EventRepository } from "../events/event.repository.js";
 
-import { ensureEventExists, ensureEventOwner } from "../events/rules/event-access.rule.js";
+import {
+  ensureEventExists,
+  ensureEventOwner,
+} from "../events/rules/event-access.rule.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { ForbiddenException } from "../../common/exceptions/ForbiddenException.js";
 import { BookingStatus, Role } from "@prisma/client";
@@ -168,6 +171,23 @@ export class BookingService {
     return {
       items,
       pagination: buildPaginationMeta(query.page, query.limit, total),
+    };
+  }
+
+  // get booking statistics for an event (for organizer and admin)
+  async getEventStats(currentUser: AuthenticatedUser, eventId: string) {
+    const event = await this.eventRepository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    const stats = await this.repository.getEventStats(eventId);
+
+    return {
+      ...stats,
+      totalTickets: stats.confirmedTickets + stats.cancelledTickets,
+      availableSeats: event.availableSeats,
     };
   }
 }

@@ -60,4 +60,17 @@ export class BookingController {
 
     successResponse(res, result, "Event bookings retrieved successfully");
   };
+
+  // get booking statistics for an event (for organizer and admin)
+  getEventStats = async (req: Request, res: Response) => {
+    const { eventId } = eventBookingsParamSchema.parse(req.params);
+
+    const result = await this.service.getEventStats(req.user!, eventId);
+
+    successResponse(
+      res,
+      result,
+      "Event booking statistics retrieved successfully",
+    );
+  };
 }
