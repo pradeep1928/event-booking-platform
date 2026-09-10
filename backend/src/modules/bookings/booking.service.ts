@@ -185,6 +185,8 @@ export class BookingService {
     const stats = await this.repository.getEventStats(eventId);
 
     return {
+      eventId: event.id,
+      eventName: event.title,
       ...stats,
       totalTickets: stats.confirmedTickets + stats.cancelledTickets,
       availableSeats: event.availableSeats,
