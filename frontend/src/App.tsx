@@ -1,13 +1,14 @@
 
 import './App.css'
+import { BrowserRouter } from "react-router-dom";
+import AppRouter from "./routes/AppRouter";
+
 
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">
-        Event Booking Platform
-      </h1>
-    </div>
+     <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
   );
 }
 
