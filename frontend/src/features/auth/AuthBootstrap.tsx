@@ -11,28 +11,42 @@ type AuthBootstrapProps = {
   children: ReactNode;
 };
 
+let refreshPromise: Promise<string> | null = null;
+
 const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
   const dispatch = useAppDispatch();
 
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [refreshToken] = useRefreshTokenMutation();
 
   const { data: meResponse, isSuccess: isMeSuccess } = useMeQuery(
     undefined,
     {
-      skip: !isInitialized,
+      skip: !isAuthenticated,
     },
   );
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const response = await refreshToken().unwrap();
+        if (!refreshPromise) {
+          refreshPromise = refreshToken()
+            .unwrap()
+            .then((response) => response.data.accessToken)
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
 
-        dispatch(setAccessToken(response.data.accessToken));
+        const accessToken = await refreshPromise;
+
+        dispatch(setAccessToken(accessToken));
+        setIsAuthenticated(true);
       } catch {
         dispatch(clearCredentials());
+        setIsAuthenticated(false);
       } finally {
         setIsInitialized(true);
       }
