@@ -25,9 +25,13 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   api,
   extraOptions,
 ) => {
+  const isRefreshRequest =
+    typeof args === "string"
+      ? args === "/auth/refresh-token"
+      : args.url === "/auth/refresh-token";
   let result = await rawBaseQuery(args, api, extraOptions);
 
-  if (result.error?.status === 401) {
+  if (result.error?.status === 401 && !isRefreshRequest) {
     const refreshResult = await rawBaseQuery(
       {
         url: '/auth/refresh-token',
