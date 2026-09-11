@@ -1,14 +1,18 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import App from './App.tsx';
-import { store } from './app/store.ts';
-import { Provider } from 'react-redux';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
 
-createRoot(document.getElementById('root')!).render(
+import App from "./App";
+import { store } from "./app/store";
+import AuthBootstrap from "./features/auth/AuthBootstrap";
+import "./index.css";
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
+      <AuthBootstrap>
+        <App />
+      </AuthBootstrap>
     </Provider>
   </StrictMode>,
 );
