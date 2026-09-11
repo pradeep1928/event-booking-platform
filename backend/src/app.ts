@@ -11,14 +11,17 @@ import { requestIdMiddleware } from './common/middlware/request-id.middleware.js
 import { loggerMiddleware } from './common/middlware/logger.middleware.js';
 
 import routes from './routes/index.js';
-
+import { env } from './config/env.js'
 const app = express();
 
 app.set('trust proxy', 1);
 
 app.use(helmet());
 
-app.use(cors());
+app.use(cors({
+    origin: env.FRONTEND_URL,
+    credentials: true
+}));
 
 app.use(compression());
 

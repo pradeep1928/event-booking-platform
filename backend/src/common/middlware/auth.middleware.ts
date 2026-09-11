@@ -24,11 +24,8 @@ export async function authenticate(
 
     const user = await authService.validateAuthenticatedUser(payload.sub);
 
-    req.user = {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-    };
+    req.user = user
+
 
     next();
   } catch (error){

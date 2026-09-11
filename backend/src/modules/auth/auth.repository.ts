@@ -15,6 +15,7 @@ export class AuthRepository {
       },
     });
   }
+  
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     return prisma.user.create({
       data,
@@ -30,6 +31,8 @@ export class AuthRepository {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
         role: true,
         isActive: true,
       },
@@ -56,7 +59,7 @@ export class AuthRepository {
   }
 
   async deleteRefreshToken(id: string) {
-    return prisma.refreshToken.delete({
+    return prisma.refreshToken.deleteMany({
       where: {
         id,
       },

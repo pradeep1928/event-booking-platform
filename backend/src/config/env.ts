@@ -14,6 +14,8 @@ const envSchema = z.object({
 
   HOST: z.string(),
 
+  FRONTEND_URL: z.string(),
+
   DATABASE_URL: z.string(),
 
   JWT_ACCESS_SECRET: z.string().min(32),

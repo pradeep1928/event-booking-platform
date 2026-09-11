@@ -92,12 +92,12 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password");
     }
 
-    if (!user.isActive) {
+    if (!user || !user.isActive) {
       throw new ForbiddenException(
         "Your account has been deactivated. Please contact support.",
       );
     }
-    
+
     if (!user.isVerified) {
       throw new ForbiddenException(
         "Please verify your email before logging in.",
@@ -405,6 +405,12 @@ export class AuthService {
       throw new ForbiddenException("Your account has been deactivated");
     }
 
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+    };
   }
 }
