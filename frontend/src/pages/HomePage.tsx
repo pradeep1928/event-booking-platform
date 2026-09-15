@@ -1,6 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+
+import { useAppSelector } from "../hooks/redux";
 
 const HomePage = () => {
+  const { accessToken } = useAppSelector((state) => state.auth);
+
+  if (accessToken) {
+    return <Navigate to="/events" replace />;
+  }
+
   return (
     <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center px-4 py-12 sm:py-16">
       <div className="w-full max-w-4xl text-center">
@@ -13,8 +21,8 @@ const HomePage = () => {
         </h1>
 
         <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
-          Find exciting events, reserve your tickets, and manage your bookings
-          from one place.
+          Find exciting events, reserve your tickets, and manage your
+          bookings from one place.
         </p>
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

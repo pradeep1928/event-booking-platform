@@ -6,6 +6,7 @@ import AppLayout from '../layouts/AppLayout';
 import PublicLayout from '../layouts/PublicLayout';
 import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../features/auth/LoginPage';
+import PublicOnlyRoute from './PublicOnlyRoute';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
@@ -22,8 +23,10 @@ const AppRouter = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<PublicOnlyRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
         </Route>
 
         {/* Protected routes */}
