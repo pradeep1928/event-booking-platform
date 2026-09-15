@@ -118,8 +118,15 @@ export class EventService {
       ];
     }
 
+    // if (query.city) {
+    //   where.city = query.city;
+    // }
+
     if (query.city) {
-      where.city = query.city;
+      where.city = {
+        equals: query.city,
+        mode: "insensitive",
+      };
     }
 
     if (query.category) {

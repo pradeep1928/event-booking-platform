@@ -1,5 +1,9 @@
-import { baseApi } from '../../app/api/baseApi';
-import type { Event, EventsResponse, GetEventsParams } from './eventTypes';
+import { baseApi } from "../../app/api/baseApi";
+import type {
+  Event,
+  EventsResponse,
+  GetEventsParams,
+} from "./eventTypes";
 
 type ApiResponse<T> = {
   success: boolean;
@@ -9,28 +13,22 @@ type ApiResponse<T> = {
 
 export const eventApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getEvents: builder.query<EventsResponse, GetEventsParams>({
+    getEvents: builder.query<ApiResponse<EventsResponse>, GetEventsParams>({
       query: (params) => ({
-        url: '/events',
+        url: "/events",
         params,
       }),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({
-                type: 'Event' as const,
-                id,
-              })),
-              { type: 'Event' as const, id: 'LIST' },
-            ]
-          : [{ type: 'Event' as const, id: 'LIST' }],
+      providesTags: ["Event"],
     }),
 
     getEventById: builder.query<ApiResponse<Event>, string>({
       query: (id) => `/events/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'Event', id }],
+      providesTags: (_result, _error, id) => [{ type: "Event", id }],
     }),
   }),
 });
 
-export const { useGetEventsQuery, useGetEventByIdQuery } = eventApi;
+export const {
+  useGetEventsQuery,
+  useGetEventByIdQuery,
+} = eventApi;

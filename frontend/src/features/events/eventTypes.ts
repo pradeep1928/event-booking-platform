@@ -1,15 +1,13 @@
 export type EventCategory =
-  | 'CONFERENCE'
-  | 'WORKSHOP'
-  | 'CONCERT'
-  | 'SPORTS'
-  | 'FESTIVAL'
-  | 'EXHIBITION'
-  | 'NETWORKING'
-  | 'OTHER'
-  | 'MUSIC'
-  | 'BUSINESS';
-
+  | "MUSIC"
+  | "SPORTS"
+  | "BUSINESS"
+  | "EDUCATION"
+  | "WORKSHOP"
+  | "CONFERENCE"
+  | "FESTIVAL"
+  | "OTHER";
+  
 export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED';
 
 export type EventOrganizer = {
