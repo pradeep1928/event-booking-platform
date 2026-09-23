@@ -281,7 +281,7 @@ export class AuthRepository {
         },
       });
 
-      await tx.emailVerificationToken.delete({
+      await tx.emailVerificationToken.deleteMany({
         where: {
           id: data.verificationTokenId,
         },

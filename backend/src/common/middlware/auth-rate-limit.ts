@@ -1,19 +1,19 @@
 import { createRateLimiter } from "./rate-limit.middleware.js";
 
 export const loginLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 10 * 60 * 1000,
   max: 5,
   useEmail: true,
 });
 
 export const registerLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  max: 100,
 });
 
 export const forgotPasswordLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 3,
+  max: 5,
   useEmail: true,
 });
 
@@ -29,5 +29,5 @@ export const refreshTokenLimiter = createRateLimiter({
 
 export const resendVerificationLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 3,
+  max: 30,
 });
