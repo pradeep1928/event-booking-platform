@@ -26,7 +26,7 @@ const RegisterPage = () => {
   const [registerUser, { isLoading }] = useRegisterMutation();
 
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isRegistered, setIsRegistered] = useState(false);
+  // const [isRegistered, setIsRegistered] = useState(false);
 
   const {
     register,
@@ -49,9 +49,14 @@ const RegisterPage = () => {
     try {
       const { confirmPassword: _, ...payload } = formData;
 
-      await registerUser(payload).unwrap();
+      const response = await registerUser(payload).unwrap();
 
-      setIsRegistered(true);
+      navigate(
+      `/verify-email?email=${encodeURIComponent(response.data.email)}`,
+      { replace: true },
+    );
+
+      // setIsRegistered(true);
     } catch (error) {
       if (typeof error === 'object' && error !== null && 'data' in error) {
         const data = (
@@ -72,39 +77,39 @@ const RegisterPage = () => {
     }
   };
 
-  if (isRegistered) {
-    return (
-      <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-md">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
-            <div
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl text-emerald-600"
-              aria-hidden="true"
-            >
-              ✓
-            </div>
+  // if (isRegistered) {
+  //   return (
+  //     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:py-12">
+  //       <div className="w-full max-w-md">
+  //         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
+  //           <div
+  //             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl text-emerald-600"
+  //             aria-hidden="true"
+  //           >
+  //             ✓
+  //           </div>
 
-            <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Account created
-            </h1>
+  //           <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+  //             Account created
+  //           </h1>
 
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              We've sent a verification link to your email address. Verify your email before signing
-              in.
-            </p>
+  //           <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+  //             We've sent a verification link to your email address. Verify your email before signing
+  //             in.
+  //           </p>
 
-            <button
-              type="button"
-              onClick={() => navigate('/login', { replace: true })}
-              className="mt-6 min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Continue to sign in
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  //           <button
+  //             type="button"
+  //             onClick={() => navigate('/login', { replace: true })}
+  //             className="mt-6 min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+  //           >
+  //             Continue to sign in
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </main>
+  //   );
+  // }
 
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:py-12">

@@ -13,6 +13,7 @@ const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
 const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const EventsPage = lazy(() => import('../features/events/EventsPage'));
 const EventDetailsPage = lazy(() => import('../features/events/EventDetailsPage'));
+const VerifyEmailPage = lazy(() => import('../features/auth/VerifyEmailPage'));
 
 const AppRouter = () => {
   return (
@@ -27,6 +28,7 @@ const AppRouter = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
 
         {/* Protected routes */}
