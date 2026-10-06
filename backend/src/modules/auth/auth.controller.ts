@@ -102,8 +102,13 @@ export class AuthController {
 
   // refresh token
   refreshToken = async (req: Request, res: Response): Promise<void> => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException("Refresh token not found");
+    }
     const payload = refreshTokenSchema.parse({
-      refreshToken: req.cookies.refreshToken,
+      refreshToken
     });
 
     const result = await this.authService.refreshToken(payload);

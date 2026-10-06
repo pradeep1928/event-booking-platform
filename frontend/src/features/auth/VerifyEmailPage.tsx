@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
@@ -16,58 +16,79 @@ const VerifyEmailPage = () => {
     token ? 'verifying' : 'idle',
   );
 
+  const hasVerifiedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [resendSuccessMessage, setResendSuccessMessage] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const [verifyEmail] = useVerifyEmailMutation();
   const [resendVerificationEmail, { isLoading: isResending }] =
     useResendVerificationEmailMutation();
 
-useEffect(() => {
-  if (!token) {
-    return;
-  }
-
-  const verify = async () => {
-    try {
-      setVerificationState("verifying");
-      setErrorMessage("");
-
-      await verifyEmail({ token }).unwrap();
-
-      setVerificationState("success");
-    } catch (error) {
-      setVerificationState("error");
-
-      const response = error as {
-        data?: {
-          message?: string;
-        };
-      };
-
-      setErrorMessage(
-        response.data?.message ??
-          "We couldn't verify your email. The link may be invalid or expired.",
-      );
+  useEffect(() => {
+    if (!token || hasVerifiedRef.current) {
+      return;
     }
-  };
 
-  void verify();
-}, [token, verifyEmail]);
+    hasVerifiedRef.current = true
+
+    const verify = async () => {
+      try {
+        setVerificationState('verifying');
+        setErrorMessage('');
+
+        await verifyEmail({ token }).unwrap();
+
+        setVerificationState('success');
+      } catch (error) {
+        setVerificationState('error');
+
+        const response = error as {
+          data?: {
+            message?: string;
+          };
+        };
+
+        setErrorMessage(
+          response.data?.message ??
+            "We couldn't verify your email. The link may be invalid or expired.",
+        );
+      }
+    };
+
+    void verify();
+  }, [token, verifyEmail]);
 
   const handleResend = async () => {
-    if (!emailFromUrl) {
+    if (!emailFromUrl || resendCooldown > 0) {
       setErrorMessage('Please enter your email address to resend the verification email.');
       return;
     }
 
     try {
       setErrorMessage('');
+      setResendSuccessMessage('');
 
       await resendVerificationEmail({
         email: emailFromUrl,
       }).unwrap();
 
+      setResendSuccessMessage('A new verification email has been sent. Please check your inbox.');
+
       setVerificationState('idle');
+
+      setResendCooldown(60);
+
+      const intervalId = window.setInterval(() => {
+        setResendCooldown((current) => {
+          if (current <= 1) {
+            window.clearInterval(intervalId);
+            return 0;
+          }
+
+          return current - 1;
+        });
+      }, 1000);
     } catch {
       setErrorMessage('Unable to resend the verification email. Please try again.');
     }
@@ -156,10 +177,14 @@ useEffect(() => {
             <button
               type="button"
               onClick={handleResend}
-              disabled={isResending}
+              disabled={isResending || resendCooldown > 0}
               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isResending ? 'Sending...' : 'Resend verification email'}
+              {isResending
+                ? 'Sending...'
+                : resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : 'Resend verification email'}
             </button>
           )}
 
@@ -209,15 +234,28 @@ useEffect(() => {
         </p>
       )}
 
+      {resendSuccessMessage && (
+        <p
+          className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
+          {resendSuccessMessage}
+        </p>
+      )}
+
       <div className="mt-8 flex flex-col gap-3">
         {emailFromUrl && (
           <button
             type="button"
-            onClick={handleResend}
+            onClick={handleResend || resendCooldown > 0}
             disabled={isResending}
             className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-indigo-200 bg-white px-5 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isResending ? 'Sending...' : 'Resend verification email'}
+            {isResending
+              ? 'Sending...'
+              : resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : 'Resend verification email'}
           </button>
         )}
 
