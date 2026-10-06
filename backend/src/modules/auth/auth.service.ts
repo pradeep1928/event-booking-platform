@@ -44,6 +44,7 @@ export class AuthService {
       lastName: data.lastName,
       email: data.email,
       password: hashedPassword,
+      role: data.role
     });
 
     // Generate verification token

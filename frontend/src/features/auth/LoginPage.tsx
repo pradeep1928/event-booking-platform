@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +27,9 @@ const LoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const isOrganizerMode = searchParams.get('mode') === 'organizer';
 
   const [login, { isLoading }] = useLoginMutation();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -54,10 +57,13 @@ const LoginPage = () => {
       const state = location.state as LoginLocationState | null;
       const from = state?.from;
 
-      const destination =
-        from?.pathname && from.pathname !== '/login'
-          ? `${from.pathname}${from.search}${from.hash}`
-          : '/';
+      let destination = '/events';
+
+      if (from?.pathname && from.pathname !== '/login') {
+        destination = `${from.pathname}${from.search}${from.hash}`;
+      } else if (response.data.user.role === 'ORGANIZER') {
+        destination = '/organizer/events';
+      }
 
       navigate(destination, { replace: true });
     } catch (error) {
@@ -81,33 +87,35 @@ const LoginPage = () => {
   };
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:py-12">
-      <div className="w-full max-w-md">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
+      <div className="w-full max-w-lg">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Welcome back
+            <p className="text-sm font-semibold text-indigo-600">Event Booking</p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              {isOrganizerMode ? 'Organizer sign in' : 'Welcome back'}
             </h1>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Sign in to manage your events and bookings.
+            <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+              {isOrganizerMode
+                ? 'Sign in to create and manage your events.'
+                : 'Sign in to discover events and manage your bookings.'}
             </p>
           </div>
 
           {serverError && (
             <div
-              className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              className="mt-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
               role="alert"
             >
               {serverError}
             </div>
           )}
 
-          <form onSubmit={handleSubmit(handleLogin)} className="mt-6 space-y-5" noValidate>
-            {/* Email */}
+          <form onSubmit={handleSubmit(handleLogin)} className="mt-8 space-y-5" noValidate>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+              <label htmlFor="email" className="block text-sm font-semibold text-slate-800">
+                Email address
               </label>
 
               <input
@@ -117,20 +125,19 @@ const LoginPage = () => {
                 {...register('email')}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? 'email-error' : undefined}
-                className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
+                className="mt-2 block min-h-12 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 placeholder="you@example.com"
               />
 
               {errors.email && (
-                <p id="email-error" className="mt-1.5 text-sm text-red-600">
+                <p id="email-error" className="mt-1.5 text-sm text-rose-600">
                   {errors.email.message}
                 </p>
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-800">
                 Password
               </label>
 
@@ -141,12 +148,12 @@ const LoginPage = () => {
                 {...register('password')}
                 aria-invalid={Boolean(errors.password)}
                 aria-describedby={errors.password ? 'password-error' : undefined}
-                className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
+                className="mt-2 block min-h-12 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 placeholder="Enter your password"
               />
 
               {errors.password && (
-                <p id="password-error" className="mt-1.5 text-sm text-red-600">
+                <p id="password-error" className="mt-1.5 text-sm text-rose-600">
                   {errors.password.message}
                 </p>
               )}
@@ -155,21 +162,43 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex min-h-11 w-full items-center justify-center rounded-md bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
+          <p className="mt-6 text-center text-sm text-slate-600">
+            Don&apos;t have an account?{' '}
             <Link
-              to="/register"
-              className="font-semibold text-gray-900 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+              to={isOrganizerMode ? '/register?mode=organizer' : '/register'}
+              className="font-semibold text-indigo-600 transition hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
               Create one
             </Link>
           </p>
+          {!isOrganizerMode && (
+            <p className="mt-3 text-center text-sm text-slate-600">
+              Hosting events?{' '}
+              <Link
+                to="/login?mode=organizer"
+                className="font-semibold text-indigo-600 transition hover:text-indigo-700"
+              >
+                Organizer sign in
+              </Link>
+            </p>
+          )}
+          {isOrganizerMode && (
+            <p className="mt-3 text-center text-sm text-slate-600">
+              Looking to attend events?{' '}
+              <Link
+                to="/login"
+                className="font-semibold text-indigo-600 transition hover:text-indigo-700"
+              >
+                Attendee sign in
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </main>

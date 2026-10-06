@@ -1,7 +1,7 @@
 import { useMeQuery } from './authApi';
 
 const ProfilePage = () => {
-  const { data, isLoading, isError } = useMeQuery();
+  const { data, isLoading, isError } = useMeQuery(undefined, {refetchOnMountOrArgChange: true,});
 
   if (isLoading) {
     return (

@@ -18,6 +18,7 @@ export type RegisterRequest = {
   lastName: string;
   email: string;
   password: string;
+  role: 'USER' | 'ORGANIZER';
 };
 
 type LoginResponse = {
@@ -47,6 +48,7 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['Auth'],
     }),
 
     register: builder.mutation<ApiResponse<AuthUser>, RegisterRequest>({

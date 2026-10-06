@@ -23,6 +23,8 @@ export const registerSchema = z.object({
     .regex(/[a-z]/, "Password must contain one lowercase letter")
     .regex(/[0-9]/, "Password must contain one number")
     .regex(/[^A-Za-z0-9]/, "Password must contain one special character"),
+
+  role: z.enum(["USER", "ORGANIZER"]).default("USER"),
 });
 
 export const loginSchema = z.object({
@@ -77,7 +79,9 @@ export const resendVerificationEmailSchema = z.object({
   email: z.email().trim().toLowerCase(),
 });
 
-export type ResendVerificationEmailDto = z.infer<typeof resendVerificationEmailSchema>;
+export type ResendVerificationEmailDto = z.infer<
+  typeof resendVerificationEmailSchema
+>;
 export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>;
 export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;

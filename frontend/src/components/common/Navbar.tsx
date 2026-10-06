@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { baseApi } from '../../app/api/baseApi';
 import { useLogoutMutation } from '../../features/auth/authApi';
 import { clearCredentials } from '../../features/auth/authSlice';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux';
@@ -35,6 +36,8 @@ const Navbar = ({ variant }: NavbarProps) => {
     } finally {
       dispatch(clearCredentials());
 
+      // Clear cached API data belonging to previous user
+      dispatch(baseApi.util.resetApiState());
       setIsUserMenuOpen(false);
       setIsMenuOpen(false);
 

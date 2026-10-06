@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,11 +23,15 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [registerUser, { isLoading }] = useRegisterMutation();
 
   const [serverError, setServerError] = useState<string | null>(null);
   // const [isRegistered, setIsRegistered] = useState(false);
 
+  const initialMode = searchParams.get('mode') === 'organizer' ? 'ORGANIZER' : 'USER';
+
+  const [selectedRole, setSelectedRole] = useState<'USER' | 'ORGANIZER'>(initialMode);
   const {
     register,
     handleSubmit,
@@ -47,14 +51,16 @@ const RegisterPage = () => {
     setServerError(null);
 
     try {
-      const { confirmPassword: _, ...payload } = formData;
+      const { confirmPassword: _, ...formPayload } = formData;
+
+      const payload = {
+        ...formPayload,
+        role: selectedRole,
+      };
 
       const response = await registerUser(payload).unwrap();
 
-      navigate(
-      `/verify-email?email=${encodeURIComponent(response.data.email)}`,
-      { replace: true },
-    );
+      navigate(`/verify-email?email=${encodeURIComponent(response.data.email)}`, { replace: true });
 
       // setIsRegistered(true);
     } catch (error) {
@@ -126,6 +132,38 @@ const RegisterPage = () => {
               Join us and start discovering amazing events.
             </p>
           </div>
+
+          <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('USER')}
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                selectedRole === 'USER'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Attend events
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedRole('ORGANIZER')}
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                selectedRole === 'ORGANIZER'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Host events
+            </button>
+          </div>
+
+          <p className="mt-3 text-sm text-center leading-6 text-slate-600">
+            {selectedRole === 'USER'
+              ? 'Create an account to discover events and manage your bookings.'
+              : 'Create an organizer account to publish events, manage attendees, and track bookings.'}
+          </p>
 
           {serverError && (
             <div
