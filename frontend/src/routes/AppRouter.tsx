@@ -14,6 +14,7 @@ const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const EventsPage = lazy(() => import('../features/events/EventsPage'));
 const EventDetailsPage = lazy(() => import('../features/events/EventDetailsPage'));
 const VerifyEmailPage = lazy(() => import('../features/auth/VerifyEmailPage'));
+const ProfilePage = lazy(() => import('../features/auth/ProfilePage'));
 
 const AppRouter = () => {
   return (
@@ -34,6 +35,7 @@ const AppRouter = () => {
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+          <Route path='/profile' element={<ProfilePage />} />
             {/*
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailsPage />} />
