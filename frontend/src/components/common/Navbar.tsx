@@ -219,18 +219,40 @@ const Navbar = ({ variant }: NavbarProps) => {
             {isAuthenticated ? (
               <>
                 <Link
-                  to="/bookings"
+                  to="/events"
                   onClick={handleNavigation}
                   className="rounded-lg px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  My Bookings
+                  Events
                 </Link>
+                {user?.role === 'ORGANIZER' || user?.role === 'ADMIN' ? (
+                  <>
+                    <Link
+                      to="/organizer/events"
+                      onClick={handleNavigation}
+                      className="rounded-lg px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      Manage Events
+                    </Link>
 
-                {/* {user && (
-                  <div className="border-t border-slate-200 px-3 py-3 text-sm font-medium text-slate-700">
-                    {user.firstName} {user.lastName}
-                  </div>
-                )} */}
+                    <Link
+                      to="/organizer/events/new"
+                      onClick={handleNavigation}
+                      className="rounded-lg bg-indigo-600 px-3 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      Create Event
+                    </Link>
+                  </>
+                ) : (
+                  <Link
+                    to="/bookings"
+                    onClick={handleNavigation}
+                    className="rounded-lg px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    My Bookings
+                  </Link>
+                )}
+
                 <Link
                   to="/profile"
                   onClick={handleNavigation}
@@ -250,6 +272,14 @@ const Navbar = ({ variant }: NavbarProps) => {
               </>
             ) : (
               <>
+                <Link
+                  to="/events"
+                  onClick={handleNavigation}
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Events
+                </Link>
+
                 <Link
                   to="/login"
                   onClick={handleNavigation}

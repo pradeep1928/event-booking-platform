@@ -17,6 +17,7 @@ const EventDetailsPage = lazy(() => import('../features/events/EventDetailsPage'
 const VerifyEmailPage = lazy(() => import('../features/auth/VerifyEmailPage'));
 const ProfilePage = lazy(() => import('../features/auth/ProfilePage'));
 const OrganizerEventsPage = lazy(() => import('../features/events/OrganizerEventsPage'));
+const CreateEventPage = lazy(() => import('../features/events/CreateEventPage'));
 
 const AppRouter = () => {
   return (
@@ -40,6 +41,7 @@ const AppRouter = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route element={<RoleProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']} />}>
               <Route path="/organizer/events" element={<OrganizerEventsPage />} />
+              <Route path="/organizer/events/new" element={<CreateEventPage />} />
             </Route>
             {/*
             <Route path="/events" element={<EventsPage />} />

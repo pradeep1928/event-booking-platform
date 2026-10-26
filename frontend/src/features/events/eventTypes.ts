@@ -53,12 +53,31 @@ export type GetEventsParams = {
   sortOrder?: SortOrder;
 };
 
+export type CreateEventRequest = {
+  title: string;
+  description?: string;
+  category: EventCategory;
+
+  venue: string;
+  city: string;
+  state: string;
+  country: string;
+
+  eventDate: string;
+  bookingStart: string;
+  bookingEnd: string;
+
+  totalSeats: number;
+  price: number;
+};
+
 export type PaginationMeta = {
   page: number;
   limit: number;
   total: number;
   totalPages: number;
 };
+
 
 export type EventsResponse = {
   items: Event[];
