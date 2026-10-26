@@ -71,13 +71,30 @@ const Navbar = ({ variant }: NavbarProps) => {
           </Link>
           {isAuthenticated ? (
             <>
-              <Link
-                to="/bookings"
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                My Bookings
-              </Link>
+              {user?.role === 'ORGANIZER' || user?.role === 'ADMIN' ? (
+                <>
+                  <Link
+                    to="/organizer/events"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    Manage Events
+                  </Link>
 
+                  <Link
+                    to="/organizer/events/new"
+                    className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    Create Event
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/bookings"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  My Bookings
+                </Link>
+              )}
               {user && (
                 <div className="relative ml-2 border-l border-slate-200 pl-4">
                   <button

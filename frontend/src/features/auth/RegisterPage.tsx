@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useRegisterMutation } from './authApi';
+import type { RegisterRequest } from './authApi';
 
 const registerSchema = z
   .object({
@@ -13,6 +14,7 @@ const registerSchema = z
     email: z.string().trim().email('Enter a valid email address'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string().min(2, 'Confirm your password'),
+    
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
@@ -23,15 +25,26 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [registerUser, { isLoading }] = useRegisterMutation();
 
   const [serverError, setServerError] = useState<string | null>(null);
   // const [isRegistered, setIsRegistered] = useState(false);
 
-  const initialMode = searchParams.get('mode') === 'organizer' ? 'ORGANIZER' : 'USER';
+  // const initialMode = searchParams.get('mode') === 'organizer' ? 'ORGANIZER' : 'USER';
 
-  const [selectedRole, setSelectedRole] = useState<'USER' | 'ORGANIZER'>(initialMode);
+  // const [selectedRole, setSelectedRole] = useState<'USER' | 'ORGANIZER'>(initialMode);
+
+  const selectedRole = searchParams.get('mode') === 'organizer' ? 'ORGANIZER' : 'USER';
+
+  const handleRoleChange = (role: 'USER' | 'ORGANIZER') => {
+    if (role === 'ORGANIZER') {
+      setSearchParams({ mode: 'organizer' });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   const {
     register,
     handleSubmit,
@@ -53,9 +66,9 @@ const RegisterPage = () => {
     try {
       const { confirmPassword: _, ...formPayload } = formData;
 
-      const payload = {
+      const payload: RegisterRequest  = {
         ...formPayload,
-        role: selectedRole,
+      role: selectedRole,
       };
 
       const response = await registerUser(payload).unwrap();
@@ -136,7 +149,7 @@ const RegisterPage = () => {
           <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
             <button
               type="button"
-              onClick={() => setSelectedRole('USER')}
+              onClick={() => handleRoleChange('USER')}
               className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
                 selectedRole === 'USER'
                   ? 'bg-white text-indigo-700 shadow-sm'
@@ -148,7 +161,7 @@ const RegisterPage = () => {
 
             <button
               type="button"
-              onClick={() => setSelectedRole('ORGANIZER')}
+              onClick={() => handleRoleChange('ORGANIZER')}
               className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
                 selectedRole === 'ORGANIZER'
                   ? 'bg-white text-violet-700 shadow-sm'

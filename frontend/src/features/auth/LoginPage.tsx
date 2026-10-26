@@ -51,6 +51,16 @@ const LoginPage = () => {
 
     try {
       const response = await login(formData).unwrap();
+      if (
+        isOrganizerMode &&
+        response.data.user.role !== 'ORGANIZER' &&
+        response.data.user.role !== 'ADMIN'
+      ) {
+        setServerError(
+          'This account is not registered as an organizer. Please use attendee sign in.',
+        );
+        return;
+      }
 
       dispatch(setCredentials(response.data));
 
