@@ -71,6 +71,20 @@ export type CreateEventRequest = {
   price: number;
 };
 
+export type OrganizerEventsParams = {
+  page?: number;
+  limit?: number;
+
+  search?: string;
+  city?: string;
+
+  status?: EventStatus;
+  category?: EventCategory;
+
+  sortBy?: EventSortBy;
+  sortOrder?: SortOrder;
+};
+
 export type PaginationMeta = {
   page: number;
   limit: number;
