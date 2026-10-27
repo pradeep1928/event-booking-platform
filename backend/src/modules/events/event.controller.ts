@@ -44,6 +44,15 @@ export class EventController {
     successResponse(res, result, "Events fetched successfully");
   };
 
+  // manage, edit own events
+  findManageById = async (req: Request, res: Response) => {
+    const { id } = eventIdParamSchema.parse(req.params);
+
+    const event = await this.service.findManageById(req.user!, id);
+
+    successResponse(res, event, "Event fetched successfully");
+  };
+
   // find event by id
   findById = async (req: Request, res: Response) => {
     const { id } = eventIdParamSchema.parse(req.params);
@@ -52,7 +61,6 @@ export class EventController {
 
     successResponse(res, event, "Event fetched successfully");
   };
-
   // update event only admin (all) or organizer (own events)
   update = async (req: Request, res: Response) => {
     const { id } = eventIdParamSchema.parse(req.params);

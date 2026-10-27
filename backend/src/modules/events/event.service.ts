@@ -241,6 +241,19 @@ export class EventService {
     return event;
   }
 
+  // manage, edit own events
+  async findManageById(currentUser: AuthenticatedUser, eventId: string) {
+    ensureOrganizerOrAdmin(currentUser);
+
+    const event = await this.repository.findById(eventId);
+
+    ensureEventExists(event);
+
+    ensureEventOwner(currentUser, event);
+
+    return event;
+  }
+
   // update event only admin (all) or organizer (own events)
   async update(
     currentUser: AuthenticatedUser,

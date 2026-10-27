@@ -32,7 +32,15 @@ router.get(
   asyncHandler(controller.findMyEvents),
 );
 
-// get event by id -- for all 
+// manage, edit own events
+router.get(
+  "/:id/manage",
+  authenticate,
+  authorize(Role.ADMIN, Role.ORGANIZER),
+  asyncHandler(controller.findManageById),
+);
+
+// get event by id -- for all
 router.get("/:id", asyncHandler(controller.findById));
 
 // update event only admin (all events) or organizer (own events)
@@ -44,18 +52,13 @@ router.patch(
   asyncHandler(controller.update),
 );
 
-// publish event only admin (all) or organizer (own events) 
+// publish event only admin (all) or organizer (own events)
 // id is event id
 router.patch(
   "/:id/publish",
   authenticate,
-  authorize(
-    Role.ADMIN,
-    Role.ORGANIZER,
-  ),
-  asyncHandler(
-    controller.publish,
-  ),
+  authorize(Role.ADMIN, Role.ORGANIZER),
+  asyncHandler(controller.publish),
 );
 
 // cancel event only admin (all) or organizer (own events)
@@ -63,13 +66,8 @@ router.patch(
 router.patch(
   "/:id/cancel",
   authenticate,
-  authorize(
-    Role.ADMIN,
-    Role.ORGANIZER,
-  ),
-  asyncHandler(
-    controller.cancel,
-  ),
+  authorize(Role.ADMIN, Role.ORGANIZER),
+  asyncHandler(controller.cancel),
 );
 
 export default router;
