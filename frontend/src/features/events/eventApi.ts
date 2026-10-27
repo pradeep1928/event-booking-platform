@@ -58,6 +58,20 @@ export const eventApi = baseApi.injectEndpoints({
         },
       ],
     }),
+    cancelEvent: builder.mutation<ApiResponse<Event>, string>({
+      query: (id) => ({
+        url: `/events/${id}/cancel`,
+        method: 'PATCH',
+      }),
+
+      invalidatesTags: (_result, _error, id) => [
+        'Event',
+        {
+          type: 'Event',
+          id,
+        },
+      ],
+    }),
   }),
 });
 
@@ -66,5 +80,6 @@ export const {
   useGetEventByIdQuery,
   useGetMyEventsQuery,
   useCreateEventMutation,
-  usePublishEventMutation
+  usePublishEventMutation,
+  useCancelEventMutation
 } = eventApi;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { useGetMyEventsQuery, usePublishEventMutation } from './eventApi';
+import { useGetMyEventsQuery, usePublishEventMutation, useCancelEventMutation } from './eventApi';
 
 import type { EventCategory, EventStatus, EventSortBy, SortOrder } from './eventTypes';
 
@@ -51,6 +51,10 @@ const OrganizerEventsPage = () => {
 
   const [publishingEventId, setPublishingEventId] = useState<string | null>(null);
 
+  const [cancelEvent, { isLoading: isCancelling }] = useCancelEventMutation();
+
+  const [cancellingEventId, setCancellingEventId] = useState<string | null>(null);
+
   const [actionError, setActionError] = useState<string | null>(null);
 
   const events = data?.data.items ?? [];
@@ -92,6 +96,34 @@ const OrganizerEventsPage = () => {
       setActionError('Unable to publish the event. Please try again.');
     } finally {
       setPublishingEventId(null);
+    }
+  };
+
+  const handleCancelEvent = async (eventId: string) => {
+    setActionError(null);
+    setCancellingEventId(eventId);
+
+    try {
+      await cancelEvent(eventId).unwrap();
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'data' in error) {
+        const data = (
+          error as {
+            data?: {
+              message?: string;
+            };
+          }
+        ).data;
+
+        if (data?.message) {
+          setActionError(data.message);
+          return;
+        }
+      }
+
+      setActionError('Unable to cancel the event. Please try again.');
+    } finally {
+      setCancellingEventId(null);
     }
   };
 
@@ -376,12 +408,22 @@ const OrganizerEventsPage = () => {
                   {(event.status === 'DRAFT' || event.status === 'PUBLISHED') && (
                     <button
                       type="button"
-                      disabled
-                      className="rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 opacity-60"
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          `Are you sure you want to cancel "${event.title}"?`,
+                        );
+
+                        if (confirmed) {
+                          void handleCancelEvent(event.id);
+                        }
+                      }}
+                      disabled={isCancelling && cancellingEventId === event.id}
+                      className="rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Cancel
+                      {isCancelling && cancellingEventId === event.id ? 'Cancelling...' : 'Cancel'}
                     </button>
                   )}
+                  
                 </div>
               </article>
             ))}
