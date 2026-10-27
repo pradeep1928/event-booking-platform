@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useGetMyEventsQuery, usePublishEventMutation, useCancelEventMutation } from './eventApi';
 
 import type { EventCategory, EventStatus, EventSortBy, SortOrder } from './eventTypes';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const categories: EventCategory[] = [
   'MUSIC',
@@ -57,6 +58,11 @@ const OrganizerEventsPage = () => {
 
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const [eventToCancel, setEventToCancel] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
   const events = data?.data.items ?? [];
 
   const pagination = data?.data.pagination;
@@ -105,6 +111,8 @@ const OrganizerEventsPage = () => {
 
     try {
       await cancelEvent(eventId).unwrap();
+
+      setEventToCancel(null);
     } catch (error) {
       if (typeof error === 'object' && error !== null && 'data' in error) {
         const data = (
@@ -126,7 +134,6 @@ const OrganizerEventsPage = () => {
       setCancellingEventId(null);
     }
   };
-
   return (
     <section className="w-full">
       {/* Header */}
@@ -414,15 +421,12 @@ const OrganizerEventsPage = () => {
                   {(event.status === 'DRAFT' || event.status === 'PUBLISHED') && (
                     <button
                       type="button"
-                      onClick={() => {
-                        const confirmed = window.confirm(
-                          `Are you sure you want to cancel "${event.title}"?`,
-                        );
-
-                        if (confirmed) {
-                          void handleCancelEvent(event.id);
-                        }
-                      }}
+                      onClick={() =>
+                        setEventToCancel({
+                          id: event.id,
+                          title: event.title,
+                        })
+                      }
                       disabled={isCancelling && cancellingEventId === event.id}
                       className="rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -444,6 +448,29 @@ const OrganizerEventsPage = () => {
           )}
         </>
       )}
+      <ConfirmDialog
+        isOpen={Boolean(eventToCancel)}
+        title="Cancel event?"
+        description={
+          eventToCancel
+            ? `Are you sure you want to cancel "${eventToCancel.title}"? This action may affect existing attendees and bookings.`
+            : ''
+        }
+        confirmLabel="Cancel event"
+        isLoading={isCancelling && cancellingEventId === eventToCancel?.id}
+        onClose={() => {
+          if (!isCancelling) {
+            setEventToCancel(null);
+          }
+        }}
+        onConfirm={() => {
+          if (!eventToCancel) {
+            return;
+          }
+
+          void handleCancelEvent(eventToCancel.id);
+        }}
+      />
     </section>
   );
 };

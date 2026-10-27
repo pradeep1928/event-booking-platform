@@ -1,11 +1,6 @@
 import { useState } from 'react';
-import type { ReactNode  } from 'react'
-import {
-  Link,
-  Navigate,
-  useNavigate,
-  useParams,
-} from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import {
   useCancelEventMutation,
@@ -14,6 +9,7 @@ import {
 } from './eventApi';
 
 import type { EventStatus } from './eventTypes';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const OrganizerEventDetailsPage = () => {
   const navigate = useNavigate();
@@ -22,34 +18,19 @@ const OrganizerEventDetailsPage = () => {
     id: string;
   }>();
 
-  const [actionError, setActionError] =
-    useState<string | null>(null);
-
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useGetManageEventByIdQuery(id ?? '', {
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  
+  const { data, isLoading, isError } = useGetManageEventByIdQuery(id ?? '', {
     skip: !id,
   });
 
-  const [
-    publishEvent,
-    { isLoading: isPublishing },
-  ] = usePublishEventMutation();
+  const [publishEvent, { isLoading: isPublishing }] = usePublishEventMutation();
 
-  const [
-    cancelEvent,
-    { isLoading: isCancelling },
-  ] = useCancelEventMutation();
+  const [cancelEvent, { isLoading: isCancelling }] = useCancelEventMutation();
 
   if (!id) {
-    return (
-      <Navigate
-        to="/organizer/events"
-        replace
-      />
-    );
+    return <Navigate to="/organizer/events" replace />;
   }
 
   if (isLoading) {
@@ -71,20 +52,15 @@ const OrganizerEventDetailsPage = () => {
     return (
       <section className="mx-auto max-w-3xl">
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
-          <h1 className="text-lg font-semibold text-rose-800">
-            Unable to load event
-          </h1>
+          <h1 className="text-lg font-semibold text-rose-800">Unable to load event</h1>
 
           <p className="mt-2 text-sm text-rose-700">
-            This event could not be loaded or you don't
-            have permission to manage it.
+            This event could not be loaded or you don't have permission to manage it.
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              navigate('/organizer/events')
-            }
+            onClick={() => navigate('/organizer/events')}
             className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
           >
             Back to events
@@ -102,35 +78,19 @@ const OrganizerEventDetailsPage = () => {
     try {
       await publishEvent(event.id).unwrap();
     } catch (error) {
-      setActionError(
-        getApiErrorMessage(
-          error,
-          'Unable to publish the event.',
-        ),
-      );
+      setActionError(getApiErrorMessage(error, 'Unable to publish the event.'));
     }
   };
 
   const handleCancel = async () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to cancel "${event.title}"?`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setActionError(null);
 
     try {
       await cancelEvent(event.id).unwrap();
+
+      setIsCancelDialogOpen(false);
     } catch (error) {
-      setActionError(
-        getApiErrorMessage(
-          error,
-          'Unable to cancel the event.',
-        ),
-      );
+      setActionError(getApiErrorMessage(error, 'Unable to cancel the event.'));
     }
   };
 
@@ -139,9 +99,7 @@ const OrganizerEventDetailsPage = () => {
       {/* Back */}
       <button
         type="button"
-        onClick={() =>
-          navigate('/organizer/events')
-        }
+        onClick={() => navigate('/organizer/events')}
         className="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
       >
         ← Back to events
@@ -155,18 +113,14 @@ const OrganizerEventDetailsPage = () => {
               {formatLabel(event.category)}
             </span>
 
-            <EventStatusBadge
-              status={event.status}
-            />
+            <EventStatusBadge status={event.status} />
           </div>
 
           <h1 className="mt-3 break-words text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {event.title}
           </h1>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Created {formatDate(event.createdAt)}
-          </p>
+          <p className="mt-2 text-sm text-slate-500">Created {formatDate(event.createdAt)}</p>
         </div>
 
         {/* Actions */}
@@ -189,25 +143,18 @@ const OrganizerEventDetailsPage = () => {
               disabled={isPublishing}
               className="inline-flex min-h-10 items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isPublishing
-                ? 'Publishing...'
-                : 'Publish'}
+              {isPublishing ? 'Publishing...' : 'Publish'}
             </button>
           )}
 
-          {(event.status === 'DRAFT' ||
-            event.status === 'PUBLISHED') && (
+          {(event.status === 'DRAFT' || event.status === 'PUBLISHED') && (
             <button
               type="button"
-              onClick={() => {
-                void handleCancel();
-              }}
+              onClick={() => setIsCancelDialogOpen(true)}
               disabled={isCancelling}
               className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isCancelling
-                ? 'Cancelling...'
-                : 'Cancel'}
+              {isCancelling ? 'Cancelling...' : 'Cancel'}
             </button>
           )}
         </div>
@@ -227,57 +174,29 @@ const OrganizerEventDetailsPage = () => {
         <div className="space-y-6">
           <DetailSection title="About this event">
             <p className="whitespace-pre-line text-sm leading-7 text-slate-600 sm:text-base">
-              {event.description ||
-                'No description provided.'}
+              {event.description || 'No description provided.'}
             </p>
           </DetailSection>
 
           <DetailSection title="Location">
             <div className="grid gap-4 sm:grid-cols-2">
-              <DetailItem
-                label="Venue"
-                value={event.venue}
-              />
+              <DetailItem label="Venue" value={event.venue} />
 
-              <DetailItem
-                label="City"
-                value={event.city}
-              />
+              <DetailItem label="City" value={event.city} />
 
-              <DetailItem
-                label="State"
-                value={event.state}
-              />
+              <DetailItem label="State" value={event.state} />
 
-              <DetailItem
-                label="Country"
-                value={event.country}
-              />
+              <DetailItem label="Country" value={event.country} />
             </div>
           </DetailSection>
 
           <DetailSection title="Event schedule">
             <div className="grid gap-4 sm:grid-cols-2">
-              <DetailItem
-                label="Event date"
-                value={formatDateTime(
-                  event.eventDate,
-                )}
-              />
+              <DetailItem label="Event date" value={formatDateTime(event.eventDate)} />
 
-              <DetailItem
-                label="Booking starts"
-                value={formatDateTime(
-                  event.bookingStart,
-                )}
-              />
+              <DetailItem label="Booking starts" value={formatDateTime(event.bookingStart)} />
 
-              <DetailItem
-                label="Booking ends"
-                value={formatDateTime(
-                  event.bookingEnd,
-                )}
-              />
+              <DetailItem label="Booking ends" value={formatDateTime(event.bookingEnd)} />
             </div>
           </DetailSection>
         </div>
@@ -286,51 +205,47 @@ const OrganizerEventDetailsPage = () => {
         <aside className="space-y-6">
           <DetailSection title="Capacity">
             <div className="space-y-4">
-              <DetailItem
-                label="Total seats"
-                value={String(
-                  event.totalSeats,
-                )}
-              />
+              <DetailItem label="Total seats" value={String(event.totalSeats)} />
 
-              <DetailItem
-                label="Available seats"
-                value={String(
-                  event.availableSeats,
-                )}
-              />
+              <DetailItem label="Available seats" value={String(event.availableSeats)} />
 
               <DetailItem
                 label="Booked seats"
-                value={String(
-                  event.totalSeats -
-                    event.availableSeats,
-                )}
+                value={String(event.totalSeats - event.availableSeats)}
               />
             </div>
           </DetailSection>
 
           <DetailSection title="Pricing">
-            <DetailItem
-              label="Ticket price"
-              value={formatPrice(event.price)}
-            />
+            <DetailItem label="Ticket price" value={formatPrice(event.price)} />
           </DetailSection>
 
           <DetailSection title="Organizer">
             <div>
               <p className="font-semibold text-slate-900">
-                {event.organizer.firstName}{' '}
-                {event.organizer.lastName}
+                {event.organizer.firstName} {event.organizer.lastName}
               </p>
 
-              <p className="mt-1 break-all text-sm text-slate-500">
-                {event.organizer.email}
-              </p>
+              <p className="mt-1 break-all text-sm text-slate-500">{event.organizer.email}</p>
             </div>
           </DetailSection>
         </aside>
       </div>
+      <ConfirmDialog
+        isOpen={isCancelDialogOpen}
+        title="Cancel event?"
+        description={`Are you sure you want to cancel "${event.title}"? This action may affect existing attendees and bookings.`}
+        confirmLabel="Cancel event"
+        isLoading={isCancelling}
+        onClose={() => {
+          if (!isCancelling) {
+            setIsCancelDialogOpen(false);
+          }
+        }}
+        onConfirm={() => {
+          void handleCancel();
+        }}
+      />
     </section>
   );
 };
@@ -340,19 +255,12 @@ type DetailSectionProps = {
   children: ReactNode;
 };
 
-const DetailSection = ({
-  title,
-  children,
-}: DetailSectionProps) => {
+const DetailSection = ({ title, children }: DetailSectionProps) => {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900">
-        {title}
-      </h2>
+      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
 
-      <div className="mt-4">
-        {children}
-      </div>
+      <div className="mt-4">{children}</div>
     </section>
   );
 };
@@ -362,19 +270,12 @@ type DetailItemProps = {
   value: string;
 };
 
-const DetailItem = ({
-  label,
-  value,
-}: DetailItemProps) => {
+const DetailItem = ({ label, value }: DetailItemProps) => {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-        {label}
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
 
-      <p className="mt-1 break-words text-sm font-medium text-slate-700">
-        {value}
-      </p>
+      <p className="mt-1 break-words text-sm font-medium text-slate-700">{value}</p>
     </div>
   );
 };
@@ -383,94 +284,57 @@ type EventStatusBadgeProps = {
   status: EventStatus;
 };
 
-const EventStatusBadge = ({
-  status,
-}: EventStatusBadgeProps) => {
-  const styles: Record<
-    EventStatus,
-    string
-  > = {
-    DRAFT:
-      'bg-slate-100 text-slate-700',
-    PUBLISHED:
-      'bg-emerald-100 text-emerald-700',
-    CANCELLED:
-      'bg-rose-100 text-rose-700',
-    COMPLETED:
-      'bg-violet-100 text-violet-700',
+const EventStatusBadge = ({ status }: EventStatusBadgeProps) => {
+  const styles: Record<EventStatus, string> = {
+    DRAFT: 'bg-slate-100 text-slate-700',
+    PUBLISHED: 'bg-emerald-100 text-emerald-700',
+    CANCELLED: 'bg-rose-100 text-rose-700',
+    COMPLETED: 'bg-violet-100 text-violet-700',
   };
 
   return (
-    <span
-      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${styles[status]}`}
-    >
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${styles[status]}`}>
       {formatLabel(status)}
     </span>
   );
 };
 
-const formatLabel = (
-  value: string,
-) => {
+const formatLabel = (value: string) => {
   return value
     .toLowerCase()
     .replace(/_/g, ' ')
-    .replace(/\b\w/g, (letter) =>
-      letter.toUpperCase(),
-    );
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
-const formatDate = (
-  value: string,
-) => {
-  return new Intl.DateTimeFormat(
-    'en-IN',
-    {
-      dateStyle: 'medium',
-    },
-  ).format(new Date(value));
+const formatDate = (value: string) => {
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+  }).format(new Date(value));
 };
 
-const formatDateTime = (
-  value: string,
-) => {
-  return new Intl.DateTimeFormat(
-    'en-IN',
-    {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    },
-  ).format(new Date(value));
+const formatDateTime = (value: string) => {
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
 };
 
-const formatPrice = (
-  value: string,
-) => {
+const formatPrice = (value: string) => {
   const price = Number(value);
 
   if (price === 0) {
     return 'Free';
   }
 
-  return new Intl.NumberFormat(
-    'en-IN',
-    {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 2,
-    },
-  ).format(price);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(price);
 };
 
-const getApiErrorMessage = (
-  error: unknown,
-  fallback: string,
-) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'data' in error
-  ) {
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
     const response = (
       error as {
         data?: {
