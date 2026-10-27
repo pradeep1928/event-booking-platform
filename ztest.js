@@ -90,33 +90,52 @@
 
 
 
-const arr = [2, 5, 'hi', true]
-arr.foo = 'hello'
+// const arr = [2, 5, 'hi', true]
+// arr.foo = 'hello'
 // console.log('arr', arr)
 // for (let i in arr) {
 //     console.log(i)
 // }
-for (let val of arr) {
-    console.log(val)
-}
+// for (let val of arr) {
+//     console.log(val)
+// }
 // console.log('arr length', arr.length)
 // console.log(arr['foo'])
 
 // console.log(arr.foo); // "hello"
 // console.log(Object.keys(arr)); // ["0", "1", "2"]
+// console.log(Object.values(arr))
 // console.log(Object.getOwnPropertyNames(arr)); // ["0","1","2","length","foo"]
 
-const arr2 = [1, 5, 8, 'hi', true]
-arr2[100] = 'Hii'
-console.log('arr2', arr2)
-console.log('arr2 length', arr2.length)
-console.log(arr2[100]); 
-console.log(Object.keys(arr2)); 
-console.log(Object.getOwnPropertyNames(arr2)); 
-for (let i in arr2) {
-    console.log('in arr2', i)
-}
-for (let i = 0; i < arr2.length; i++) {
-    console.log(arr2[i])
-}
+// const arr2 = [1, 5, 8, 'hi', true]
+// arr2[10] = 'Hii'
+// console.log('arr2', arr2)
+// console.log('arr2 length', arr2.length)
+// console.log(arr2[10]); 
+// console.log(Object.keys(arr2)); 
+// console.log(Object.getOwnPropertyNames(arr2)); 
+// for (let i in arr2) {
+//     console.log('in arr2', i)
+// }
+// for (let i = 0; i < arr2.length; i++) {
+//     console.log(arr2[i])
+// }
 
+
+// =======***=========
+let tags  = ['Event', 'Auth', 'Booking'];
+let providesTags = (result) =>
+  result
+    ? [
+        ...result.map(({ id }) => ({
+          type: "Event",
+          id,
+        })),
+        { type: "Event", id: "LIST" },
+      ]
+    : [{ type: "Event", id: "LIST" }]
+
+console.log(providesTags(tags))
+
+let arr = tags.map((item) => `${item} is found`)
+console.log(...arr)
