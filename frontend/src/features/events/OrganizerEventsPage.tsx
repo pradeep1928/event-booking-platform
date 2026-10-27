@@ -386,7 +386,13 @@ const OrganizerEventsPage = () => {
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
-                  
+                  <Link
+                    to={`/organizer/events/${event.id}`}
+                    className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    View
+                  </Link>
+
                   <Link
                     to={`/organizer/events/${event.id}/edit`}
                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
