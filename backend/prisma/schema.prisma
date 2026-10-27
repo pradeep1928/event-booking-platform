@@ -19,8 +19,18 @@ enum Role {
 }
 
 enum BookingStatus {
+  PENDING
   CONFIRMED
   CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
 
 enum EventStatus {
@@ -42,61 +52,60 @@ enum EventCategory {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String   @unique
-  password    String
-  role        Role     @default(USER)
-  isVerified  Boolean  @default(false)
-  isActive Boolean @default(true)
+  id         String  @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String  @unique
+  password   String
+  role       Role    @default(USER)
+  isVerified Boolean @default(false)
+  isActive   Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  bookings      Booking[]
-  events        Event[]
-  refreshTokens RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
+  bookings                Booking[]
+  events                  Event[]
+  refreshTokens           RefreshToken[]
+  passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 
   @@index([email])
 }
 
-
 model Event {
-  id              String @id @default(cuid())
+  id String @id @default(cuid())
 
-  title           String
-  description     String?
+  title       String
+  description String?
 
-  category        EventCategory
+  category EventCategory
 
-  venue           String
+  venue String
 
-  city            String
-  state           String
-  country         String
+  city    String
+  state   String
+  country String
 
-  eventDate       DateTime
+  eventDate DateTime
 
-  bookingStart    DateTime
-  bookingEnd      DateTime
+  bookingStart DateTime
+  bookingEnd   DateTime
 
-  totalSeats      Int
-  availableSeats  Int
+  totalSeats     Int
+  availableSeats Int
 
-  price           Decimal @db.Decimal(10,2)
+  price Decimal @db.Decimal(10, 2)
 
-  status          EventStatus @default(DRAFT)
+  status EventStatus @default(DRAFT)
 
-  organizerId     String
-  organizer       User @relation(fields: [organizerId], references: [id])
+  organizerId String
+  organizer   User   @relation(fields: [organizerId], references: [id])
 
-  bookings        Booking[]
+  bookings Booking[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizerId])
   @@index([eventDate])
@@ -104,39 +113,97 @@ model Event {
   @@index([status])
 }
 
-
 model Booking {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  userId  String
+  eventId String
+
   ticketCount Int
-  status      BookingStatus @default(CONFIRMED)
 
-  userId      String
-  eventId     String
+  // Snapshot of event price at booking time.
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(12, 2)
 
-  user         User  @relation(fields: [userId], references: [id])
-  event        Event @relation(fields: [eventId], references: [id])
+  status BookingStatus @default(PENDING)
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Used only while waiting for payment.
+  reservationExpiresAt DateTime?
+
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  expiredAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  payments Payment[]
 
   @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@index([status])
+  @@index([reservationExpiresAt])
 }
 
+model Payment {
+  id String @id @default(cuid())
+
+  bookingId String
+
+  // RAZORPAY for now.
+  // Keep this as String so historical payments remain valid
+  // even if providers are added or removed later.
+  provider String
+
+  // Razorpay order ID
+  providerOrderId String @unique
+
+  // Available after the customer attempts/completes payment.
+  providerPaymentId String? @unique
+
+  // Always store gateway amount in smallest currency unit.
+  // Example: ₹1499.50 = 149950 paise.
+  amountMinor Int
+
+  currency String @default("INR")
+
+  status PaymentStatus @default(CREATED)
+
+  failureCode   String?
+  failureReason String?
+
+  paidAt     DateTime?
+  failedAt   DateTime?
+  refundedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([provider])
+}
 
 model RefreshToken {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  jti        String   @unique
+  jti String @unique
 
-  tokenHash  String   @unique
+  tokenHash String @unique
 
-  expiresAt  DateTime
+  expiresAt DateTime
 
-  revokedAt  DateTime?
+  revokedAt DateTime?
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  updatedAt  DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   userId String
 
@@ -144,32 +211,30 @@ model RefreshToken {
 }
 
 model PasswordResetToken {
-  id         String   @id @default(cuid())
-  tokenHash  String   @unique
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 model EmailVerificationToken {
+  id String @id @default(cuid())
 
-  id          String   @id @default(cuid())
+  tokenHash String @unique
 
-  tokenHash   String   @unique
+  expiresAt DateTime
 
-  expiresAt   DateTime
+  createdAt DateTime @default(now())
 
-  createdAt   DateTime @default(now())
+  userId String
 
-  userId      String
-
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-
 }
