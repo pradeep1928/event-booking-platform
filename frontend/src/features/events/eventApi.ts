@@ -5,6 +5,7 @@ import type {
   GetEventsParams,
   CreateEventRequest,
   OrganizerEventsParams,
+  UpdateEventRequest,
 } from './eventTypes';
 
 type ApiResponse<T> = {
@@ -58,6 +59,31 @@ export const eventApi = baseApi.injectEndpoints({
         },
       ],
     }),
+    getManageEventById: builder.query<ApiResponse<Event>, string>({
+      query: (id) => `/events/${id}/manage`,
+
+      providesTags: (_result, _error, id) => [
+        {
+          type: 'Event',
+          id,
+        },
+      ],
+    }),
+    updateEvent: builder.mutation<ApiResponse<Event>, UpdateEventRequest>({
+      query: ({ id, body }) => ({
+        url: `/events/${id}/update`,
+        method: 'PATCH',
+        body,
+      }),
+
+      invalidatesTags: (_result, _error, { id }) => [
+        'Event',
+        {
+          type: 'Event',
+          id,
+        },
+      ],
+    }),
     cancelEvent: builder.mutation<ApiResponse<Event>, string>({
       query: (id) => ({
         url: `/events/${id}/cancel`,
@@ -80,6 +106,8 @@ export const {
   useGetEventByIdQuery,
   useGetMyEventsQuery,
   useCreateEventMutation,
+  useGetManageEventByIdQuery,
+  useUpdateEventMutation,
   usePublishEventMutation,
-  useCancelEventMutation
+  useCancelEventMutation,
 } = eventApi;

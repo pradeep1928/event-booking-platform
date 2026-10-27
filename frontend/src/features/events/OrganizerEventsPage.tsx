@@ -386,13 +386,13 @@ const OrganizerEventsPage = () => {
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
-                  <button
-                    type="button"
-                    disabled
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-500 opacity-60"
+                  
+                  <Link
+                    to={`/organizer/events/${event.id}/edit`}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     Edit
-                  </button>
+                  </Link>
 
                   {event.status === 'DRAFT' && (
                     <button
@@ -423,7 +423,6 @@ const OrganizerEventsPage = () => {
                       {isCancelling && cancellingEventId === event.id ? 'Cancelling...' : 'Cancel'}
                     </button>
                   )}
-                  
                 </div>
               </article>
             ))}

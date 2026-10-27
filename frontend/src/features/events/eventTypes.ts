@@ -1,13 +1,6 @@
 export type EventCategory =
-  | "MUSIC"
-  | "SPORTS"
-  | "BUSINESS"
-  | "EDUCATION"
-  | "WORKSHOP"
-  | "CONFERENCE"
-  | "FESTIVAL"
-  | "OTHER";
-  
+  'MUSIC' | 'SPORTS' | 'BUSINESS' | 'EDUCATION' | 'WORKSHOP' | 'CONFERENCE' | 'FESTIVAL' | 'OTHER';
+
 export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED';
 
 export type EventOrganizer = {
@@ -37,6 +30,47 @@ export type Event = {
   organizer: EventOrganizer;
   createdAt: string;
   updatedAt: string;
+};
+
+export type UpdateEventRequest = {
+  id: string;
+  body: {
+    title?: string;
+    description?: string;
+    category?: EventCategory;
+
+    venue?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+
+    eventDate?: string;
+    bookingStart?: string;
+    bookingEnd?: string;
+
+    totalSeats?: number;
+    price?: number;
+
+    bannerImage?: string;
+  };
+};
+
+export type EventFormValues = {
+  title: string;
+  description: string;
+  category: EventCategory;
+
+  venue: string;
+  city: string;
+  state: string;
+  country: string;
+
+  eventDate: string;
+  bookingStart: string;
+  bookingEnd: string;
+
+  totalSeats: number;
+  price: number;
 };
 
 export type EventSortBy = 'eventDate' | 'price' | 'createdAt';
@@ -91,7 +125,6 @@ export type PaginationMeta = {
   total: number;
   totalPages: number;
 };
-
 
 export type EventsResponse = {
   items: Event[];
