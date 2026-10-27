@@ -1,24 +1,12 @@
 import { useState } from 'react';
 
-import {
-  Navigate,
-  useNavigate,
-  useParams,
-} from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import type { SubmitHandler } from 'react-hook-form';
+import EventForm, { type EventFormDirtyFields } from './EventForm';
 
-import EventForm from './EventForm';
+import { useGetManageEventByIdQuery, useUpdateEventMutation } from './eventApi';
 
-import {
-  useGetManageEventByIdQuery,
-  useUpdateEventMutation,
-} from './eventApi';
-
-import type {
-  EventFormValues,
-  UpdateEventRequest,
-} from './eventTypes';
+import type { EventFormValues, UpdateEventRequest } from './eventTypes';
 
 const EditEventPage = () => {
   const navigate = useNavigate();
@@ -27,29 +15,16 @@ const EditEventPage = () => {
     id: string;
   }>();
 
-  const [serverError, setServerError] =
-    useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useGetManageEventByIdQuery(id ?? '', {
+  const { data, isLoading, isError } = useGetManageEventByIdQuery(id ?? '', {
     skip: !id,
   });
 
-  const [
-    updateEvent,
-    { isLoading: isUpdating },
-  ] = useUpdateEventMutation();
+  const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
 
   if (!id) {
-    return (
-      <Navigate
-        to="/organizer/events"
-        replace
-      />
-    );
+    return <Navigate to="/organizer/events" replace />;
   }
 
   if (isLoading) {
@@ -68,20 +43,15 @@ const EditEventPage = () => {
     return (
       <section className="mx-auto max-w-3xl">
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
-          <h1 className="text-lg font-semibold text-rose-800">
-            Unable to load event
-          </h1>
+          <h1 className="text-lg font-semibold text-rose-800">Unable to load event</h1>
 
           <p className="mt-2 text-sm text-rose-700">
-            The event could not be loaded or you do not
-            have permission to edit it.
+            The event could not be loaded or you do not have permission to edit it.
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              navigate('/organizer/events')
-            }
+            onClick={() => navigate('/organizer/events')}
             className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Back to events
@@ -96,8 +66,7 @@ const EditEventPage = () => {
   const defaultValues: EventFormValues = {
     title: event.title,
 
-    description:
-      event.description ?? '',
+    description: event.description ?? '',
 
     category: event.category,
 
@@ -106,54 +75,74 @@ const EditEventPage = () => {
     state: event.state,
     country: event.country,
 
-    eventDate:
-      toDateTimeLocal(event.eventDate),
+    eventDate: toDateTimeLocal(event.eventDate),
 
-    bookingStart:
-      toDateTimeLocal(event.bookingStart),
+    bookingStart: toDateTimeLocal(event.bookingStart),
 
-    bookingEnd:
-      toDateTimeLocal(event.bookingEnd),
+    bookingEnd: toDateTimeLocal(event.bookingEnd),
 
     totalSeats: event.totalSeats,
 
     price: Number(event.price),
   };
 
-  const handleUpdate: SubmitHandler<
-    EventFormValues
-  > = async (formData) => {
+  const handleUpdate = async (formData: EventFormValues, dirtyFields: EventFormDirtyFields) => {
     setServerError(null);
 
-    const body: UpdateEventRequest['body'] = {
-      title: formData.title.trim(),
+    const body: UpdateEventRequest['body'] = {};
 
-      description:
-        formData.description.trim(),
+    if (dirtyFields.title) {
+      body.title = formData.title.trim();
+    }
 
-      category: formData.category,
+    if (dirtyFields.description) {
+      body.description = formData.description.trim();
+    }
 
-      venue: formData.venue.trim(),
-      city: formData.city.trim(),
-      state: formData.state.trim(),
-      country: formData.country.trim(),
+    if (dirtyFields.category) {
+      body.category = formData.category;
+    }
 
-      eventDate: new Date(
-        formData.eventDate,
-      ).toISOString(),
+    if (dirtyFields.venue) {
+      body.venue = formData.venue.trim();
+    }
 
-      bookingStart: new Date(
-        formData.bookingStart,
-      ).toISOString(),
+    if (dirtyFields.city) {
+      body.city = formData.city.trim();
+    }
 
-      bookingEnd: new Date(
-        formData.bookingEnd,
-      ).toISOString(),
+    if (dirtyFields.state) {
+      body.state = formData.state.trim();
+    }
 
-      totalSeats: formData.totalSeats,
+    if (dirtyFields.country) {
+      body.country = formData.country.trim();
+    }
 
-      price: formData.price,
-    };
+    if (dirtyFields.eventDate) {
+      body.eventDate = new Date(formData.eventDate).toISOString();
+    }
+
+    if (dirtyFields.bookingStart) {
+      body.bookingStart = new Date(formData.bookingStart).toISOString();
+    }
+
+    if (dirtyFields.bookingEnd) {
+      body.bookingEnd = new Date(formData.bookingEnd).toISOString();
+    }
+
+    if (dirtyFields.totalSeats) {
+      body.totalSeats = formData.totalSeats;
+    }
+
+    if (dirtyFields.price) {
+      body.price = formData.price;
+    }
+
+    if (Object.keys(body).length === 0) {
+      setServerError('No changes were made to the event.');
+      return;
+    }
 
     try {
       await updateEvent({
@@ -165,11 +154,7 @@ const EditEventPage = () => {
         replace: true,
       });
     } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'data' in error
-      ) {
+      if (typeof error === 'object' && error !== null && 'data' in error) {
         const response = (
           error as {
             data?: {
@@ -179,16 +164,12 @@ const EditEventPage = () => {
         ).data;
 
         if (response?.message) {
-          setServerError(
-            response.message,
-          );
+          setServerError(response.message);
           return;
         }
       }
 
-      setServerError(
-        'Unable to update the event. Please try again.',
-      );
+      setServerError('Unable to update the event. Please try again.');
     }
   };
 
@@ -196,22 +177,17 @@ const EditEventPage = () => {
     <section className="mx-auto w-full max-w-4xl">
       <button
         type="button"
-        onClick={() =>
-          navigate('/organizer/events')
-        }
+        onClick={() => navigate('/organizer/events')}
         className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
       >
         ← Back to events
       </button>
 
       <div className="mb-6 mt-4">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Edit event
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Edit event</h1>
 
         <p className="mt-2 text-sm text-slate-600 sm:text-base">
-          Update your event details and save your
-          changes.
+          Update your event details and save your changes.
         </p>
       </div>
 
@@ -223,27 +199,18 @@ const EditEventPage = () => {
         isLoading={isUpdating}
         serverError={serverError}
         onSubmit={handleUpdate}
-        onCancel={() =>
-          navigate('/organizer/events')
-        }
+        onCancel={() => navigate('/organizer/events')}
       />
     </section>
   );
 };
 
-const toDateTimeLocal = (
-  value: string,
-) => {
+const toDateTimeLocal = (value: string) => {
   const date = new Date(value);
 
-  const timezoneOffset =
-    date.getTimezoneOffset() * 60_000;
+  const timezoneOffset = date.getTimezoneOffset() * 60_000;
 
-  return new Date(
-    date.getTime() - timezoneOffset,
-  )
-    .toISOString()
-    .slice(0, 16);
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
 };
 
 export default EditEventPage;

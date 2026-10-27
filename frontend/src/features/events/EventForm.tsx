@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
-
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import type { EventCategory, EventFormValues } from './eventTypes';
+
+export type EventFormDirtyFields = Partial<Record<keyof EventFormValues, boolean>>;
 
 const eventCategories = [
   'MUSIC',
@@ -70,7 +71,7 @@ type EventFormProps = {
 
   serverError?: string | null;
 
-  onSubmit: SubmitHandler<EventFormValues>;
+  onSubmit: (values: EventFormValues, dirtyFields: EventFormDirtyFields) => void | Promise<void>;
 
   onCancel: () => void;
 };
@@ -90,15 +91,18 @@ const EventForm = ({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
-
     defaultValues,
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
+    <form
+      onSubmit={handleSubmit((values) => onSubmit(values, dirtyFields as EventFormDirtyFields))}
+      className="space-y-8"
+      noValidate
+    >
       {serverError && (
         <div
           role="alert"
