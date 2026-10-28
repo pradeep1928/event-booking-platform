@@ -31,17 +31,73 @@ import {
 } from "../events/rules/event-access.rule.js";
 import { NotFoundException } from "../../common/exceptions/NotFoundException.js";
 import { ForbiddenException } from "../../common/exceptions/ForbiddenException.js";
-import { BookingStatus, Role } from "@prisma/client";
+import { BookingStatus, Role, Prisma } from "@prisma/client";
 import {
   buildPagination,
   buildPaginationMeta,
 } from "../../common/pagination/pagination.util.js";
+
+import {
+  calculateTotalAmount,
+  isFreeAmount,
+} from "../../common/utils/money.util.js";
+
+import { BOOKING_RESERVATION_MINUTES } from "./booking.constants.js";
+import { ConflictException } from "../../common/exceptions/ConflictException.js";
 
 export class BookingService {
   constructor(
     private readonly repository = new BookingRepository(),
     private readonly eventRepository = new EventRepository(),
   ) {}
+
+  // create booking old
+  // async create(currentUser: AuthenticatedUser, body: CreateBookingBodyDto) {
+  //   const event = await this.eventRepository.findById(body.eventId);
+
+  //   ensureEventExists(event);
+
+  //   ensureEventBookable(event);
+
+  //   ensureBookingOpen(event);
+
+  //   ensureSeatsAvailable(event, body.ticketCount);
+
+  //   const existingBooking = await this.repository.findByUserAndEvent(
+  //     currentUser.id,
+  //     body.eventId,
+  //   );
+
+  //   ensureCanBook(existingBooking);
+
+  //   if (existingBooking?.status === BookingStatus.CANCELLED) {
+  //     return this.repository.rebook(
+  //       existingBooking.id,
+  //       body.ticketCount,
+  //       body.eventId,
+  //     );
+  //   }
+
+  //   return this.repository.create(
+  //     {
+  //       ticketCount: body.ticketCount,
+
+  //       user: {
+  //         connect: {
+  //           id: currentUser.id,
+  //         },
+  //       },
+
+  //       event: {
+  //         connect: {
+  //           id: body.eventId,
+  //         },
+  //       },
+  //     },
+  //     body.eventId,
+  //     body.ticketCount,
+  //   );
+  // }
 
   async create(currentUser: AuthenticatedUser, body: CreateBookingBodyDto) {
     const event = await this.eventRepository.findById(body.eventId);
@@ -61,17 +117,61 @@ export class BookingService {
 
     ensureCanBook(existingBooking);
 
-    if (existingBooking?.status === BookingStatus.CANCELLED) {
-      return this.repository.rebook(
-        existingBooking.id,
+    const unitPrice = new Prisma.Decimal(event.price);
+
+    const totalAmount = calculateTotalAmount(unitPrice, body.ticketCount);
+
+    const isFreeEvent = isFreeAmount(unitPrice);
+
+    if (existingBooking) {
+      return this.handleExistingBooking(
+        currentUser,
+        existingBooking,
+        event.id,
         body.ticketCount,
-        body.eventId,
+        unitPrice,
+        totalAmount,
+        isFreeEvent,
       );
     }
 
-    return this.repository.create(
+    if (isFreeEvent) {
+      return this.createFreeBooking(
+        currentUser,
+        event.id,
+        body.ticketCount,
+        unitPrice,
+        totalAmount,
+      );
+    }
+
+    return this.createPaidBookingReservation(
+      currentUser,
+      event.id,
+      body.ticketCount,
+      unitPrice,
+      totalAmount,
+    );
+  }
+
+  // method to create booking for free event
+  private async createFreeBooking(
+    currentUser: AuthenticatedUser,
+    eventId: string,
+    ticketCount: number,
+    unitPrice: Prisma.Decimal,
+    totalAmount: Prisma.Decimal,
+  ) {
+    const booking = await this.repository.createFreeBooking(
       {
-        ticketCount: body.ticketCount,
+        ticketCount,
+
+        unitPrice,
+        totalAmount,
+
+        status: BookingStatus.CONFIRMED,
+
+        confirmedAt: new Date(),
 
         user: {
           connect: {
@@ -81,13 +181,147 @@ export class BookingService {
 
         event: {
           connect: {
-            id: body.eventId,
+            id: eventId,
           },
         },
       },
-      body.eventId,
-      body.ticketCount,
+      eventId,
+      ticketCount,
     );
+
+    return {
+      type: "FREE" as const,
+      booking,
+    };
+  }
+
+  // method to create booking for paid event
+  private async createPaidBookingReservation(
+    currentUser: AuthenticatedUser,
+    eventId: string,
+    ticketCount: number,
+    unitPrice: Prisma.Decimal,
+    totalAmount: Prisma.Decimal,
+  ) {
+    const reservationExpiresAt = new Date(
+      Date.now() + BOOKING_RESERVATION_MINUTES * 60 * 1000,
+    );
+
+    const booking = await this.repository.createPendingBooking(
+      {
+        ticketCount,
+
+        unitPrice,
+        totalAmount,
+
+        status: BookingStatus.PENDING,
+
+        reservationExpiresAt,
+
+        user: {
+          connect: {
+            id: currentUser.id,
+          },
+        },
+
+        event: {
+          connect: {
+            id: eventId,
+          },
+        },
+      },
+      eventId,
+      ticketCount,
+    );
+
+    return {
+      type: "PAID" as const,
+
+      booking,
+
+      paymentRequired: true,
+    };
+  }
+
+  // handle existing booking 
+  private async handleExistingBooking(
+    currentUser: AuthenticatedUser,
+    existingBooking: {
+      id: string;
+      status: BookingStatus;
+    },
+    eventId: string,
+    ticketCount: number,
+    unitPrice: Prisma.Decimal,
+    totalAmount: Prisma.Decimal,
+    isFreeEvent: boolean,
+  ) {
+    if (
+      existingBooking.status !== BookingStatus.CANCELLED &&
+      existingBooking.status !== BookingStatus.EXPIRED
+    ) {
+      throw new ConflictException("Booking already exists for this event");
+    }
+
+    if (isFreeEvent) {
+      const booking = await this.repository.reactivateBooking(
+        existingBooking.id,
+        eventId,
+        ticketCount,
+        {
+          ticketCount,
+
+          unitPrice,
+          totalAmount,
+
+          status: BookingStatus.CONFIRMED,
+
+          confirmedAt: new Date(),
+
+          cancelledAt: null,
+          expiredAt: null,
+
+          reservationExpiresAt: null,
+        },
+      );
+
+      return {
+        type: "FREE" as const,
+        booking,
+      };
+    }
+
+    const reservationExpiresAt = new Date(
+      Date.now() + BOOKING_RESERVATION_MINUTES * 60 * 1000,
+    );
+
+    const booking = await this.repository.reactivateBooking(
+      existingBooking.id,
+      eventId,
+      ticketCount,
+      {
+        ticketCount,
+
+        unitPrice,
+        totalAmount,
+
+        status: BookingStatus.PENDING,
+
+        confirmedAt: null,
+        cancelledAt: null,
+        expiredAt: null,
+
+        reservationExpiresAt,
+      },
+    );
+
+    return {
+      type: "PAID" as const,
+
+      booking,
+
+      paymentRequired: true,
+    };
   }
 
   // get booking by id (booking id)

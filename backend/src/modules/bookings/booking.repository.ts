@@ -29,7 +29,43 @@ export class BookingRepository {
   }
 
   // create booking for event
-  async create(
+  // async create(
+  //   data: Prisma.BookingCreateInput,
+  //   eventId: string,
+  //   ticketCount: number,
+  // ) {
+  //   return prisma.$transaction(async (tx) => {
+  //     const updatedEvent = await tx.event.updateMany({
+  //       where: {
+  //         id: eventId,
+  //         availableSeats: {
+  //           gte: ticketCount,
+  //         },
+  //       },
+  //       data: {
+  //         availableSeats: {
+  //           decrement: ticketCount,
+  //         },
+  //       },
+  //     });
+
+  //     if (updatedEvent.count === 0) {
+  //       throw new BadRequestException("Not enough seats available");
+  //     }
+
+  //     const booking = await tx.booking.create({
+  //       data,
+  //       include: {
+  //         event: true,
+  //       },
+  //     });
+
+  //     return booking;
+  //   });
+  // }
+
+  // create booking for free events
+  async createFreeBooking(
     data: Prisma.BookingCreateInput,
     eventId: string,
     ticketCount: number,
@@ -53,8 +89,84 @@ export class BookingRepository {
         throw new BadRequestException("Not enough seats available");
       }
 
-      const booking = await tx.booking.create({
+      return tx.booking.create({
         data,
+        include: {
+          event: true,
+        },
+      });
+    });
+  }
+
+  // create booking for paid events
+  async createPendingBooking(
+    data: Prisma.BookingCreateInput,
+    eventId: string,
+    ticketCount: number,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const updatedEvent = await tx.event.updateMany({
+        where: {
+          id: eventId,
+          availableSeats: {
+            gte: ticketCount,
+          },
+        },
+        data: {
+          availableSeats: {
+            decrement: ticketCount,
+          },
+        },
+      });
+
+      if (updatedEvent.count === 0) {
+        throw new BadRequestException("Not enough seats available");
+      }
+
+      return tx.booking.create({
+        data,
+        include: {
+          event: true,
+        },
+      });
+    });
+  }
+
+  // rebook event
+  async reactivateBooking(
+    bookingId: string,
+    eventId: string,
+    ticketCount: number,
+    data: Prisma.BookingUpdateInput,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const updatedEvent = await tx.event.updateMany({
+        where: {
+          id: eventId,
+
+          availableSeats: {
+            gte: ticketCount,
+          },
+        },
+
+        data: {
+          availableSeats: {
+            decrement: ticketCount,
+          },
+        },
+      });
+
+      if (updatedEvent.count === 0) {
+        throw new BadRequestException("Not enough seats available");
+      }
+
+      const booking = await tx.booking.update({
+        where: {
+          id: bookingId,
+        },
+
+        data,
+
         include: {
           event: true,
         },
@@ -131,6 +243,8 @@ export class BookingRepository {
         },
         data: {
           status: BookingStatus.CANCELLED,
+          cancelledAt: new Date(),
+          reservationExpiresAt: null,
         },
       });
 
