@@ -45,10 +45,14 @@ import {
 import { BOOKING_RESERVATION_MINUTES } from "./booking.constants.js";
 import { ConflictException } from "../../common/exceptions/ConflictException.js";
 
+// payment
+import { PaymentService } from "../payments/payment.service.js";
+
 export class BookingService {
   constructor(
     private readonly repository = new BookingRepository(),
     private readonly eventRepository = new EventRepository(),
+    private readonly paymentService = new PaymentService(),
   ) {}
 
   // create booking old
@@ -192,6 +196,7 @@ export class BookingService {
     return {
       type: "FREE" as const,
       booking,
+       paymentRequired: false,
     };
   }
 
@@ -210,14 +215,10 @@ export class BookingService {
     const booking = await this.repository.createPendingBooking(
       {
         ticketCount,
-
         unitPrice,
         totalAmount,
-
         status: BookingStatus.PENDING,
-
         reservationExpiresAt,
-
         user: {
           connect: {
             id: currentUser.id,
@@ -234,16 +235,22 @@ export class BookingService {
       ticketCount,
     );
 
+    const payment = await this.paymentService.initialize({
+      bookingId: booking.id,
+      userId: currentUser.id,
+      eventId,
+      totalAmount,
+    });
+
     return {
       type: "PAID" as const,
-
       booking,
-
       paymentRequired: true,
+      payment,
     };
   }
 
-  // handle existing booking 
+  // handle existing booking
   private async handleExistingBooking(
     currentUser: AuthenticatedUser,
     existingBooking: {
@@ -288,6 +295,7 @@ export class BookingService {
       return {
         type: "FREE" as const,
         booking,
+        paymentRequired: false,
       };
     }
 
@@ -315,12 +323,18 @@ export class BookingService {
       },
     );
 
+    const payment = await this.paymentService.initialize({
+      bookingId: booking.id,
+      userId: currentUser.id,
+      eventId,
+      totalAmount,
+    });
+
     return {
       type: "PAID" as const,
-
       booking,
-
       paymentRequired: true,
+      payment,
     };
   }
 

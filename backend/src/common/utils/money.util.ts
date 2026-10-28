@@ -12,3 +12,17 @@ export const isFreeAmount = (
 ) => {
   return amount.equals(0);
 };
+
+export const toMinorCurrencyUnit = (
+  amount: Prisma.Decimal,
+): number => {
+  const minorAmount = amount.mul(100);
+
+  if (!minorAmount.isInteger()) {
+    throw new Error(
+      "Amount contains more than two decimal places",
+    );
+  }
+
+  return minorAmount.toNumber();
+};

@@ -160,7 +160,7 @@ model Payment {
   provider String
 
   // Razorpay order ID
-  providerOrderId String @unique
+  providerOrderId String? @unique
 
   // Available after the customer attempts/completes payment.
   providerPaymentId String? @unique
