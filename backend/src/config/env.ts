@@ -1,14 +1,10 @@
-import dotenv from 'dotenv';
-import { z } from 'zod';
+import dotenv from "dotenv";
+import { z } from "zod";
 
 dotenv.config();
 
 const envSchema = z.object({
-  NODE_ENV: z.enum([
-    'development',
-    'production',
-    'test',
-  ]),
+  NODE_ENV: z.enum(["development", "production", "test"]),
 
   PORT: z.coerce.number(),
 
@@ -37,6 +33,11 @@ const envSchema = z.object({
   MAIL_PASSWORD: z.string().min(1),
   MAIL_FROM: z.string().min(1),
   APP_URL: z.string().url(),
+
+  // Razorpay config
+  RAZORPAY_KEY_ID: z.string().min(1),
+  RAZORPAY_KEY_SECRET: z.string().min(1),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
 });
 
 export const env = envSchema.parse(process.env);

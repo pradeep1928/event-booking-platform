@@ -47,6 +47,7 @@ import { ConflictException } from "../../common/exceptions/ConflictException.js"
 
 // payment
 import { PaymentService } from "../payments/payment.service.js";
+import { logger } from "../../common/logger/logger.js";
 
 export class BookingService {
   constructor(
@@ -196,7 +197,7 @@ export class BookingService {
     return {
       type: "FREE" as const,
       booking,
-       paymentRequired: false,
+      paymentRequired: false,
     };
   }
 
@@ -235,19 +236,35 @@ export class BookingService {
       ticketCount,
     );
 
-    const payment = await this.paymentService.initialize({
-      bookingId: booking.id,
-      userId: currentUser.id,
-      eventId,
-      totalAmount,
-    });
+    try {
+      const payment = await this.paymentService.initialize({
+        bookingId: booking.id,
+        userId: currentUser.id,
+        eventId,
+        totalAmount,
+      });
 
-    return {
-      type: "PAID" as const,
-      booking,
-      paymentRequired: true,
-      payment,
-    };
+      return {
+        type: "PAID" as const,
+        booking,
+        paymentRequired: true,
+        payment,
+      };
+    } catch (error) {
+      try {
+        await this.repository.expirePendingReservation(booking.id);
+      } catch (cleanupError) {
+        logger.error(
+          {
+            bookingId: booking.id,
+            error: cleanupError,
+          },
+          "Failed to release booking reservation after payment initialization failure",
+        );
+      }
+
+      throw error;
+    }
   }
 
   // handle existing booking
@@ -323,19 +340,35 @@ export class BookingService {
       },
     );
 
-    const payment = await this.paymentService.initialize({
-      bookingId: booking.id,
-      userId: currentUser.id,
-      eventId,
-      totalAmount,
-    });
+    try {
+      const payment = await this.paymentService.initialize({
+        bookingId: booking.id,
+        userId: currentUser.id,
+        eventId,
+        totalAmount,
+      });
 
-    return {
-      type: "PAID" as const,
-      booking,
-      paymentRequired: true,
-      payment,
-    };
+      return {
+        type: "PAID" as const,
+        booking,
+        paymentRequired: true,
+        payment,
+      };
+    } catch (error) {
+      try {
+        await this.repository.expirePendingReservation(booking.id);
+      } catch (cleanupError) {
+        logger.error(
+          {
+            bookingId: booking.id,
+            error: cleanupError,
+          },
+          "Failed to release booking reservation after payment initialization failure",
+        );
+      }
+
+      throw error;
+    }
   }
 
   // get booking by id (booking id)

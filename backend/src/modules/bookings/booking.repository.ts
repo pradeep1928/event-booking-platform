@@ -176,6 +176,87 @@ export class BookingRepository {
     });
   }
 
+  async expirePendingReservation(bookingId: string) {
+    return prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        select: {
+          id: true,
+          eventId: true,
+          ticketCount: true,
+          status: true,
+        },
+      });
+
+      if (!booking) {
+        throw new NotFoundException("Booking not found");
+      }
+
+      /*
+       * Conditional update is important.
+       *
+       * Only a PENDING booking can release
+       * reserved seats.
+       */
+      const updatedBooking = await tx.booking.updateMany({
+        where: {
+          id: bookingId,
+          status: BookingStatus.PENDING,
+        },
+
+        data: {
+          status: BookingStatus.EXPIRED,
+
+          expiredAt: new Date(),
+
+          reservationExpiresAt: null,
+        },
+      });
+
+      /*
+       * Someone else may already have:
+       * - confirmed the booking
+       * - expired the booking
+       *
+       * In either case, do NOT increment
+       * seats again.
+       */
+      if (updatedBooking.count === 0) {
+        return tx.booking.findUnique({
+          where: {
+            id: bookingId,
+          },
+          include: {
+            event: true,
+          },
+        });
+      }
+
+      await tx.event.update({
+        where: {
+          id: booking.eventId,
+        },
+
+        data: {
+          availableSeats: {
+            increment: booking.ticketCount,
+          },
+        },
+      });
+
+      return tx.booking.findUnique({
+        where: {
+          id: bookingId,
+        },
+        include: {
+          event: true,
+        },
+      });
+    });
+  }
+
   // get own booking
   async findByUser(userId: string, skip: number, take: number) {
     const filters: Prisma.BookingWhereInput = {
