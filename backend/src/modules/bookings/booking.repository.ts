@@ -257,6 +257,28 @@ export class BookingRepository {
     });
   }
 
+  async findExpiredPendingReservations(limit = 100) {
+    return prisma.booking.findMany({
+      where: {
+        status: BookingStatus.PENDING,
+
+        reservationExpiresAt: {
+          lte: new Date(),
+        },
+      },
+
+      select: {
+        id: true,
+      },
+
+      orderBy: {
+        reservationExpiresAt: "asc",
+      },
+
+      take: limit,
+    });
+  }
+  
   // get own booking
   async findByUser(userId: string, skip: number, take: number) {
     const filters: Prisma.BookingWhereInput = {

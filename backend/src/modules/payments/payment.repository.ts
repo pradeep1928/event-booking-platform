@@ -1,23 +1,15 @@
-import {
-  PaymentStatus,
-  Prisma,
-} from "@prisma/client";
+import { PaymentStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "../../common/prisma/prisma.js";
 
 export class PaymentRepository {
-  async create(
-    data: Prisma.PaymentCreateInput,
-  ) {
+  async create(data: Prisma.PaymentCreateInput) {
     return prisma.payment.create({
       data,
     });
   }
 
-  async markPending(
-    paymentId: string,
-    providerOrderId: string,
-  ) {
+  async markPending(paymentId: string, providerOrderId: string) {
     return prisma.payment.update({
       where: {
         id: paymentId,
@@ -29,10 +21,7 @@ export class PaymentRepository {
     });
   }
 
-  async markFailed(
-    paymentId: string,
-    reason?: string,
-  ) {
+  async markFailed(paymentId: string, reason?: string) {
     return prisma.payment.update({
       where: {
         id: paymentId,
@@ -40,9 +29,7 @@ export class PaymentRepository {
       data: {
         status: PaymentStatus.FAILED,
         failedAt: new Date(),
-        failureReason:
-          reason ??
-          "Payment initialization failed",
+        failureReason: reason ?? "Payment initialization failed",
       },
     });
   }
@@ -58,15 +45,30 @@ export class PaymentRepository {
     });
   }
 
-  async findByProviderOrderId(
-    providerOrderId: string,
-  ) {
+  async findByProviderOrderId(providerOrderId: string) {
     return prisma.payment.findUnique({
       where: {
         providerOrderId,
       },
       include: {
         booking: true,
+      },
+    });
+  }
+
+  async markPendingAttemptsFailedByBooking(bookingId: string, reason: string) {
+    return prisma.payment.updateMany({
+      where: {
+        bookingId,
+        status: {
+          in: [PaymentStatus.CREATED, PaymentStatus.PENDING],
+        },
+      },
+
+      data: {
+        status: PaymentStatus.FAILED,
+        failedAt: new Date(),
+        failureReason: reason,
       },
     });
   }

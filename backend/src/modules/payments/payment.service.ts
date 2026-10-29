@@ -96,6 +96,13 @@ export class PaymentService {
       throw error;
     }
   }
+
+  async expirePendingPayments(bookingId: string) {
+    await this.repository.markPendingAttemptsFailedByBooking(
+      bookingId,
+      "Booking reservation expired before payment was completed",
+    );
+  }
 }
 
 const getErrorMessage = (error: unknown) => {
